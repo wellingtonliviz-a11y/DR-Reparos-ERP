@@ -6,15 +6,17 @@ Atendimento #{{ servico.id }} | DR Reparos ERP
 
 {% block content %}
 
+
+
 <div class="cabecalho-pagina">
 
     <div>
-        <a
-            href="{{ url_for('servicos') }}"
-            class="link-voltar"
-        >
-            ← Voltar para serviços
-        </a>
+       <a
+    href="{{ url_for('servicos') }}"
+    class="btn-voltar"
+>
+    ← Voltar para serviços
+    </a>
 
         <h1>
             Atendimento #{{ servico.id }}

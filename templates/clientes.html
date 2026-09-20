@@ -1,66 +1,98 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Clientes | DR Reparos Gestão</title>
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
-</head>
+{% block title %}Clientes | DR Reparos ERP{% endblock %}
 
-<body>
+{% block content %}
 
-    <h1>👤 Clientes</h1>
+<header class="topo">
+    <div style="margin-bottom: 15px;">
+    <button type="button"
+            class="btn-voltar"
+            onclick="history.back()">
+        ← Voltar
+    </button>
+</div>
+    <div>
+        <h1>👥 Clientes</h1>
+        <p>Cadastro e gerenciamento dos clientes da DR Reparos.</p>
+    </div>
 
-    <a href="{{ url_for('novo_cliente') }}">
+    <a href="{{ url_for('novo_cliente') }}" class="btn-principal">
         + Novo Cliente
     </a>
+</header>
 
-    <br><br>
 
-    <table>
+<section class="painel">
 
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Telefone</th>
-                <th>Endereço</th>
-                <th>Cadastro</th>
-            </tr>
-        </thead>
+    <div style="margin-bottom: 20px;">
+        <h2>Clientes cadastrados</h2>
+        <p>{{ clientes|length }} clientes encontrados</p>
+    </div>
 
-        <tbody>
 
-            {% for cliente in clientes %}
+    <div class="tabela-container">
 
-            <tr>
-                <td>{{ cliente.nome }}</td>
-                <td>{{ cliente.telefone }}</td>
-                <td>{{ cliente.endereco or "-" }}</td>
-                <td>
-                    {{ cliente.data_cadastro.strftime("%d/%m/%Y") }}
-                </td>
-            </tr>
+        <table class="tabela-erp">
 
-            {% else %}
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Endereço</th>
+                    <th>Cadastro</th>
+                </tr>
+            </thead>
 
-            <tr>
-                <td colspan="4">
-                    Nenhum cliente cadastrado.
-                </td>
-            </tr>
+            <tbody>
 
-            {% endfor %}
+                {% for cliente in clientes %}
 
-        </tbody>
+                <tr>
+                    <td>
+                        <strong>{{ cliente.nome }}</strong>
+                    </td>
 
-    </table>
+                    <td>
+                        {{ cliente.telefone }}
+                    </td>
 
-    <br>
+                    <td>
+                        {{ cliente.endereco or "-" }}
+                    </td>
 
-    <a href="{{ url_for('inicio') }}">
-        ← Dashboard
+                    <td>
+                        {% if cliente.data_cadastro %}
+                            {{ cliente.data_cadastro.strftime("%d/%m/%Y") }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td colspan="4">
+                        Nenhum cliente cadastrado.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<div style="margin-top: 25px;">
+    <a href="{{ url_for('inicio') }}" class="btn-secundario">
+        ← Voltar ao Dashboard
     </a>
+</div>
 
-</body>
-</html>
+{% endblock %}

@@ -1537,3 +1537,43 @@ td {
     }
 
 }
+/* =========================================
+   DIVISÃO LARANJA ENTRE REGISTROS DA TABELA
+   ========================================= */
+
+.tabela-erp tbody tr {
+    border-bottom: 2px solid #ff7900;
+}
+
+.tabela-erp tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* =========================================
+   BOTÃO VOLTAR - PADRÃO DR REPAROS
+   ========================================= */
+
+.btn-voltar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 10px 16px;
+
+    background: #ffffff;
+    color: #111111;
+
+    border: 2px solid #ff7900;
+    border-radius: 8px;
+
+    text-decoration: none;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-voltar:hover {
+    background: #ff7900;
+    color: #ffffff;
+}

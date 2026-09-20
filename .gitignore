@@ -35,3 +35,4 @@ Thumbs.db
 
 # Planilhas usadas para importação de dados
 *.xlsx
+backup_render.dump

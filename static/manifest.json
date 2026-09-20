@@ -1,0 +1,17 @@
+{
+    "name": "DR Reparos ERP",
+    "short_name": "DR Reparos",
+    "description": "Sistema de gestão da DR Reparos",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#111111",
+    "theme_color": "#ff7900",
+    "icons": [
+        {
+            "src": "/static/img/mascote.png",
+            "sizes": "any",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}
