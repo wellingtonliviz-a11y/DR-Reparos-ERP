@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}
+Configurações | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecalho-pagina">
+
+    <div>
+        <h1>⚙️ Configurações</h1>
+
+        <p>
+            Dados da DR Reparos utilizados em documentos
+            e orçamentos.
+        </p>
+    </div>
+
+</div>
+
+
+<div class="form-card configuracoes-empresa">
+
+    <form method="POST">
+
+        <h2>🏠 Dados da empresa</h2>
+
+        <div class="grade-configuracoes">
+
+            <div class="form-grupo">
+
+                <label>
+                    Nome da empresa
+                </label>
+
+                <input
+                    type="text"
+                    name="nome_empresa"
+                    value="{{ empresa.nome_empresa or '' }}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    CPF / CNPJ
+                </label>
+
+                <input
+                    type="text"
+                    name="documento"
+                    value="{{ empresa.documento or '' }}"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    WhatsApp / Telefone
+                </label>
+
+                <input
+                    type="text"
+                    name="telefone"
+                    value="{{ empresa.telefone or '' }}"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    E-mail
+                </label>
+
+                <input
+                    type="email"
+                    name="email"
+                    value="{{ empresa.email or '' }}"
+                >
+
+            </div>
+
+            <div class="form-grupo">
+
+    <label>
+        Instagram
+    </label>
+
+    <input
+        type="text"
+        name="instagram"
+        placeholder="@drreparos12"
+        value="{{ empresa.instagram or '' }}"
+    >
+
+    </div>
+
+        </div>
+
+
+        <h2>📍 Endereço</h2>
+
+        <div class="form-grupo">
+
+            <label>
+                Endereço
+            </label>
+
+            <input
+                type="text"
+                name="endereco"
+                value="{{ empresa.endereco or '' }}"
+            >
+
+        </div>
+
+
+        <div class="grade-configuracoes">
+
+            <div class="form-grupo">
+
+                <label>
+                    Cidade
+                </label>
+
+                <input
+                    type="text"
+                    name="cidade"
+                    value="{{ empresa.cidade or '' }}"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Estado
+                </label>
+
+                <input
+                    type="text"
+                    name="estado"
+                    maxlength="2"
+                    placeholder="SP"
+                    value="{{ empresa.estado or '' }}"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    CEP
+                </label>
+
+                <input
+                    type="text"
+                    name="cep"
+                    value="{{ empresa.cep or '' }}"
+                >
+
+            </div>
+
+        </div>
+
+
+        <h2>💰 Pagamento</h2>
+
+        <div class="form-grupo">
+
+            <label>
+                Chave PIX
+            </label>
+
+            <input
+                type="text"
+                name="pix"
+                value="{{ empresa.pix or '' }}"
+            >
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label>
+                Formas de pagamento
+            </label>
+
+            <input
+                type="text"
+                name="formas_pagamento"
+                value="{{ empresa.formas_pagamento or '' }}"
+                placeholder="PIX, Dinheiro, Débito e Crédito"
+            >
+
+        </div>
+
+
+        <h2>📄 Orçamento</h2>
+
+        <div class="form-grupo">
+
+            <label>
+                Mensagem do orçamento
+            </label>
+
+            <textarea
+                name="texto_orcamento"
+                rows="3"
+            >{{ empresa.texto_orcamento or '' }}</textarea>
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label>
+                Observações padrão
+            </label>
+
+            <textarea
+                name="observacoes_orcamento"
+                rows="4"
+                placeholder="Ex.: Materiais não inclusos salvo quando especificado."
+            >{{ empresa.observacoes_orcamento or '' }}</textarea>
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="btn-principal"
+        >
+            Salvar configurações
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

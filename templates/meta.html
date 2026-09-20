@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}
+Meta Mensal | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<header class="topo">
+
+    <div>
+        <h1>Meta Mensal</h1>
+
+        <p>
+            {{ "%02d"|format(mes) }}/{{ ano }}
+        </p>
+    </div>
+
+</header>
+
+
+<section class="painel formulario-card">
+
+    <form method="POST" class="formulario">
+
+        <label>Meta de faturamento</label>
+
+        <input
+            type="number"
+            name="valor"
+            step="0.01"
+            min="0"
+            value="{{ meta.valor if meta else '' }}"
+            required
+        >
+
+
+        <button
+            type="submit"
+            class="botao botao-form"
+        >
+            Salvar meta
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

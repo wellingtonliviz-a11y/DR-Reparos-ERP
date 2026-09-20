@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Novo Cliente | DR Reparos Gestão</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <h1>🔧 Novo Cliente</h1>
+
+    <form method="POST">
+
+        <label>Nome *</label>
+        <input
+            type="text"
+            name="nome"
+            placeholder="Nome do cliente"
+            required
+        >
+
+        <label>Telefone / WhatsApp *</label>
+        <input
+            type="text"
+            name="telefone"
+            placeholder="(12) 99999-9999"
+            required
+        >
+
+        <label>E-mail</label>
+        <input
+            type="email"
+            name="email"
+            placeholder="cliente@email.com"
+        >
+
+        <label>Endereço</label>
+        <input
+            type="text"
+            name="endereco"
+            placeholder="Endereço do atendimento"
+        >
+
+        <label>Observações</label>
+        <textarea
+            name="observacoes"
+            placeholder="Informações importantes sobre o cliente"
+        ></textarea>
+
+        <button type="submit">
+            Salvar Cliente
+        </button>
+
+    </form>
+
+    <br>
+
+    <a href="{{ url_for('clientes') }}">
+        ← Voltar
+    </a>
+
+</body>
+</html>

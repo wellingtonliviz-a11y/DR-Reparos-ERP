@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}
+Serviços | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<header class="topo">
+
+    <div>
+        <h1>Ordens de Serviço</h1>
+        <p>Controle dos atendimentos da DR Reparos</p>
+    </div>
+
+</header>
+
+
+<section class="painel">
+
+    <div class="tabela-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>OS</th>
+                    <th>Cliente</th>
+                    <th>Serviço</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for servico in servicos %}
+
+                <tr>
+
+                    <!-- OS -->
+                   <td>
+                         #{{ "%04d"|format(servico.numero_os or servico.id) }}
+                    </td>
+
+
+                    <!-- CLIENTE -->
+                    <td>
+                        <strong>
+                            {{ servico.cliente.nome }}
+                        </strong>
+                    </td>
+
+
+                    <!-- SERVIÇO -->
+                    <td>
+                        {{ servico.descricao }}
+                    </td>
+
+
+                    <!-- VALOR -->
+                    <td>
+                        <strong>
+                            R$ {{ "%.2f"|format(servico.valor)|replace(".", ",") }}
+                        </strong>
+                    </td>
+
+
+                    <!-- STATUS -->
+                    <td>
+
+                        {% if servico.status == "Concluído" %}
+
+                            <span class="badge status-concluido">
+                                ✓ Concluído
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge">
+                                {{ servico.status }}
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- AÇÕES -->
+                    <td>
+
+                        <div class="acoes-servico">
+
+                            <!-- VER DETALHES -->
+                            <a
+                                class="btn-detalhes"
+                                href="{{ url_for(
+                                    'detalhes_servico',
+                                    id=servico.id
+                                ) }}"
+                            >
+                                Ver detalhes
+                            </a>
+
+
+                            <!-- FINALIZAR -->
+                            {% if servico.status != "Concluído" %}
+
+                                <a
+                                    class="botao"
+                                    href="{{ url_for(
+                                        'finalizar_servico',
+                                        id=servico.id
+                                    ) }}"
+                                >
+                                    Finalizar
+                                </a>
+
+                            {% else %}
+
+                                <span class="servico-pago">
+                                    💰 Pago
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="6">
+                        Nenhum serviço cadastrado.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+{% endblock %}

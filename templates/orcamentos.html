@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}
+Orçamentos | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<header class="topo">
+
+    <div>
+        <h1>Orçamentos</h1>
+
+        <p>
+            Controle das propostas enviadas aos clientes
+        </p>
+    </div>
+
+    <a
+        href="{{ url_for('novo_orcamento') }}"
+        class="botao"
+    >
+        + Novo orçamento
+    </a>
+
+</header>
+
+
+<section class="painel">
+
+    <div class="tabela-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Nº</th>
+                    <th>Cliente</th>
+                    <th>Serviço</th>
+                    <th>Valor</th>
+                    <th>Data</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for orcamento in orcamentos %}
+
+                <tr>
+
+                    <!-- NÚMERO -->
+                    <td>
+                        #{{ "%04d"|format(orcamento.id) }}
+                    </td>
+
+
+                    <!-- CLIENTE -->
+                    <td>
+                        <strong>
+                            {{ orcamento.cliente.nome }}
+                        </strong>
+                    </td>
+
+
+                    <!-- SERVIÇO -->
+                    <td>
+                        {{ orcamento.descricao }}
+                    </td>
+
+
+                    <!-- VALOR -->
+                    <td>
+                        <strong>
+                            R$ {{ "%.2f"|format(orcamento.valor)|replace(".", ",") }}
+                        </strong>
+                    </td>
+
+
+                    <!-- DATA -->
+                    <td>
+                        {{ orcamento.data_orcamento.strftime("%d/%m/%Y") }}
+                    </td>
+
+
+                    <!-- STATUS -->
+                    <td>
+
+                        {% if orcamento.status == "Aprovado" %}
+
+                            <span class="status-orcamento status-aprovado">
+                                ✓ Aprovado
+                            </span>
+
+
+                        {% elif orcamento.status == "Não aprovado" %}
+
+                            <span class="status-orcamento status-recusado">
+                                ✕ Não aprovado
+                            </span>
+
+
+                        {% else %}
+
+                            <span class="status-orcamento status-aguardando">
+                                ⏳ Aguardando aprovação
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- AÇÕES -->
+                    <td>
+
+                        <div class="acoes-orcamento">
+
+                            {% if orcamento.status != "Aprovado"
+                                  and orcamento.status != "Não aprovado" %}
+
+                                <!-- APROVAR -->
+
+                                <form
+                                    method="POST"
+                                    action="{{ url_for(
+                                        'aprovar_orcamento',
+                                        id=orcamento.id
+                                    ) }}"
+                                >
+
+                                    <button
+                                        type="submit"
+                                        class="btn-aprovar"
+                                    >
+                                        ✓ Aprovar
+                                    </button>
+
+                                </form>
+
+
+                                <!-- NÃO APROVAR -->
+
+                                <button
+                                    type="button"
+                                    class="btn-recusar"
+                                    onclick="abrirRecusa(
+                                        '{{ orcamento.id }}'
+                                    )"
+                                >
+                                    ✕ Não aprovado
+                                </button>
+
+
+                            {% elif orcamento.status == "Aprovado" %}
+
+                                {% if orcamento.servico %}
+
+                                    <a
+                                        href="{{ url_for(
+                                            'detalhes_servico',
+                                            id=orcamento.servico.id
+                                        ) }}"
+                                        class="btn-detalhes"
+                                    >
+                                        Ver OS #{{ "%04d"|format(orcamento.servico.numero_os or orcamento.servico.id) }}
+                                    </a>
+
+                                {% else %}
+
+                                    <span>
+                                        OS não encontrada
+                                    </span>
+
+                                {% endif %}
+
+
+                            {% else %}
+
+                                <span class="orcamento-encerrado">
+                                    Encerrado
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                        <a
+                            href="{{ url_for('gerar_orcamento_pdf', id=orcamento.id) }}"
+                            class="btn-detalhes"
+                            target="_blank"
+                        >
+                            📄 Gerar PDF
+                        </a>
+
+                        <!-- MOTIVO DA RECUSA -->
+
+                        {% if orcamento.status == "Não aprovado"
+                              and orcamento.motivo_perda %}
+
+                            <div class="motivo-perda">
+
+                                Motivo:
+                                {{ orcamento.motivo_perda }}
+
+                            </div>
+
+                        {% endif %}
+
+
+                        <!-- FORMULÁRIO OCULTO -->
+
+                        {% if orcamento.status != "Aprovado"
+                              and orcamento.status != "Não aprovado" %}
+
+                        <div
+                            id="recusa-{{ orcamento.id }}"
+                            class="caixa-recusa"
+                            style="display: none;"
+                        >
+
+                            <form
+                                method="POST"
+                                action="{{ url_for(
+                                    'recusar_orcamento',
+                                    id=orcamento.id
+                                ) }}"
+                            >
+
+                                <label>
+                                    Motivo da não aprovação
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="motivo_perda"
+                                    placeholder="Ex.: Cliente achou o valor alto"
+                                >
+
+                                <div class="acoes-recusa">
+
+                                    <button
+                                        type="submit"
+                                        class="btn-confirmar-recusa"
+                                    >
+                                        Confirmar
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="btn-cancelar-recusa"
+                                        onclick="fecharRecusa(
+                                            '{{ orcamento.id }}'
+                                        )"
+                                    >
+                                        Cancelar
+                                    </button>
+
+                                </div>
+
+                            </form>
+
+                        </div>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="7">
+                        Nenhum orçamento cadastrado.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<script>
+
+function abrirRecusa(id) {
+
+    document.getElementById(
+        "recusa-" + id
+    ).style.display = "block";
+
+}
+
+
+function fecharRecusa(id) {
+
+    document.getElementById(
+        "recusa-" + id
+    ).style.display = "none";
+
+}
+
+</script>
+
+{% endblock %}

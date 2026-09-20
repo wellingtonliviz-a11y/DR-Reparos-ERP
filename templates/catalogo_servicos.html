@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogo de Serviços | DR Reparos ERP{% endblock %}
+
+{% block content %}
+
+<div class="cabecalho-pagina">
+
+    <div>
+        <h1>Catálogo de Serviços</h1>
+        <p>
+            Serviços e valores de referência da DR Reparos.
+        </p>
+    </div>
+
+</div>
+
+
+<div class="card-tabela">
+
+    <div class="topo-tabela">
+
+        <div>
+            <h2>Serviços cadastrados</h2>
+
+            <p>
+                {{ servicos|length }} serviços encontrados
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="tabela-responsiva">
+
+        <table class="tabela-erp">
+
+            <thead>
+
+                <tr>
+                    <th>Código</th>
+                    <th>Serviço</th>
+                    <th>Categoria</th>
+                    <th>Custo base</th>
+                    <th>Valor base</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for servico in servicos %}
+
+                <tr>
+
+                    <!-- CÓDIGO -->
+                    <td>
+                        {{ servico.codigo }}
+                    </td>
+
+
+                    <!-- SERVIÇO -->
+                    <td>
+
+                        <strong>
+                            {{ servico.descricao }}
+                        </strong>
+
+                        {% if servico.complemento %}
+
+                            <br>
+
+                            <small>
+                                {{ servico.complemento }}
+                            </small>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- CATEGORIA -->
+                    <td>
+
+                        {{ servico.categoria or "-" }}
+
+                    </td>
+
+
+                    <!-- CUSTO -->
+                    <td>
+
+                        R$
+                        {{ "%.2f"|format(servico.custo_base or 0) }}
+
+                    </td>
+
+
+                    <!-- VALOR BASE -->
+                    <td>
+
+                        <strong>
+
+                            R$
+                            {{ "%.2f"|format(servico.valor_base or 0) }}
+
+                        </strong>
+
+                    </td>
+
+
+                    <!-- STATUS -->
+                    <td>
+
+                        {% if servico.ativo %}
+
+                            <span class="status-ativo">
+                                Ativo
+                            </span>
+
+                        {% else %}
+
+                            <span class="status-inativo">
+                                Inativo
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- AÇÕES -->
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'editar_catalogo_servico',
+                                id=servico.id
+                            ) }}"
+                            class="btn-editar"
+                        >
+                            Editar
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="7">
+
+                        Nenhum serviço cadastrado.
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

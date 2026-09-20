@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}DR Reparos ERP{% endblock %}
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body>
+
+<div class="layout">
+
+    <aside class="sidebar">
+
+        <div class="marca-erp">
+
+            <img
+                src="{{ url_for('static', filename='img/mascote.png') }}"
+                alt="Mascote DR Reparos"
+                class="mascote"
+            >
+
+            <div class="nome-sistema">
+                <strong>DR REPAROS</strong>
+                <span>ERP</span>
+            </div>
+
+        </div>
+
+
+        <nav>
+
+            <a
+                href="{{ url_for('inicio') }}"
+                class="{% if request.endpoint == 'inicio' %}ativo{% endif %}"
+            >
+                📊 Dashboard
+            </a>
+
+            <a
+                href="{{ url_for('clientes') }}"
+                class="{% if request.endpoint in ['clientes', 'novo_cliente'] %}ativo{% endif %}"
+            >
+                👥 Clientes
+            </a>
+
+            <a
+                href="{{ url_for('orcamentos') }}"
+                class="{% if request.endpoint in ['orcamentos', 'novo_orcamento'] %}ativo{% endif %}"
+            >
+                📝 Orçamentos
+            </a>
+
+            <a href="{{ url_for('catalogo_servicos') }}"
+                class="{% if request.endpoint == 'catalogo_servicos' %}ativo{% endif %}">
+                 🧰 Catálogo de Serviços
+            </a>
+
+                <a
+                    href="{{ url_for('materiais') }}"
+                    class="{% if request.endpoint in ['materiais', 'editar_material'] %}ativo{% endif %}"
+                >
+                    📦 Materiais / Estoque
+                </a>
+
+            <a
+                href="{{ url_for('servicos') }}"
+                class="{% if request.endpoint == 'servicos' %}ativo{% endif %}"
+            >
+                🔧 Serviços
+            </a>
+
+           <a
+                 href="{{ url_for('financeiro') }}"
+                 class="{% if request.endpoint in ['financeiro', 'nova_despesa'] %}ativo{% endif %}"
+>
+                💰 Financeiro
+            </a>
+
+            <a
+             href="{{ url_for('configurar_meta') }}"
+                 class="{% if request.endpoint == 'configurar_meta' %}ativo{% endif %}"
+>   
+             🎯 Meta mensal
+            </a>
+
+            <a
+                href="{{ url_for('configuracoes') }}"
+                class="{% if request.endpoint == 'configuracoes' %}ativo{% endif %}"
+            >
+                ⚙️ Configurações
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <main class="conteudo">
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+</div>
+
+</body>
+</html>

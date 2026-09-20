@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Serviço | DR Reparos ERP{% endblock %}
+
+{% block content %}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>Editar Serviço</h1>
+        <p>Altere os valores de referência do catálogo.</p>
+    </div>
+</div>
+
+<div class="form-card">
+
+    <form method="POST">
+
+        <div class="form-grupo">
+            <label>Código</label>
+            <input
+                type="text"
+                value="{{ servico.codigo }}"
+                disabled>
+        </div>
+
+        <div class="form-grupo">
+            <label>Descrição</label>
+            <input
+                type="text"
+                name="descricao"
+                value="{{ servico.descricao }}"
+                required>
+        </div>
+
+        <div class="form-grupo">
+            <label>Complemento</label>
+            <input
+                type="text"
+                name="complemento"
+                value="{{ servico.complemento or '' }}">
+        </div>
+
+        <div class="form-grupo">
+            <label>Categoria</label>
+            <input
+                type="text"
+                name="categoria"
+                value="{{ servico.categoria or '' }}">
+        </div>
+
+        <div class="form-grupo">
+            <label>Custo base</label>
+            <input
+                type="number"
+                name="custo_base"
+                step="0.01"
+                min="0"
+                value="{{ servico.custo_base or 0 }}">
+        </div>
+
+        <div class="form-grupo">
+            <label>Valor base sugerido</label>
+            <input
+                type="number"
+                name="valor_base"
+                step="0.01"
+                min="0"
+                value="{{ servico.valor_base }}"
+                required>
+
+            <small>
+                Este é apenas o valor sugerido.
+                No orçamento você poderá cobrar um valor diferente.
+            </small>
+        </div>
+
+        <div class="form-grupo">
+            <label>
+                <input
+                    type="checkbox"
+                    name="ativo"
+                    {% if servico.ativo %}checked{% endif %}>
+                Serviço ativo
+            </label>
+        </div>
+
+        <div class="acoes-form">
+
+            <button type="submit" class="btn-principal">
+                Salvar alterações
+            </button>
+
+            <a
+                href="{{ url_for('catalogo_servicos') }}"
+                class="btn-secundario">
+                Cancelar
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

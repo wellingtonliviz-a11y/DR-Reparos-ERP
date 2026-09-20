@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block title %}
+Atendimento #{{ servico.id }} | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecalho-pagina">
+
+    <div>
+        <a
+            href="{{ url_for('servicos') }}"
+            class="link-voltar"
+        >
+            ← Voltar para serviços
+        </a>
+
+        <h1>
+            Atendimento #{{ servico.id }}
+        </h1>
+
+        <p>
+            Detalhes completos do atendimento.
+        </p>
+    </div>
+
+</div>
+
+
+<!-- RESUMO -->
+
+<div class="cards-atendimento">
+
+    <div class="card-atendimento">
+        <span>Cliente</span>
+
+        <strong>
+            {{ servico.cliente.nome }}
+        </strong>
+    </div>
+
+
+    <div class="card-atendimento">
+        <span>Valor cobrado</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(servico.valor or 0) }}
+        </strong>
+    </div>
+
+
+    <div class="card-atendimento">
+        <span>Custo total</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(custo_total) }}
+        </strong>
+    </div>
+
+
+    <div class="card-atendimento destaque-resultado">
+        <span>Resultado</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(resultado_servico) }}
+        </strong>
+
+        <small>
+            Margem: {{ margem }}%
+        </small>
+    </div>
+
+</div>
+
+
+<!-- INFORMAÇÕES DO SERVIÇO -->
+
+<div class="form-card detalhes-card">
+
+    <h2>🔧 Serviço</h2>
+
+    <div class="grade-detalhes">
+
+        <div>
+            <span>Descrição</span>
+
+            <strong>
+                {{ servico.descricao }}
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Status</span>
+
+            <strong>
+                {{ servico.status }}
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Data do atendimento</span>
+
+            <strong>
+                {% if servico.data_servico %}
+                    {{ servico.data_servico.strftime("%d/%m/%Y") }}
+                {% else %}
+                    Não realizado
+                {% endif %}
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Orçamento</span>
+
+            <strong>
+                {% if servico.orcamento %}
+                    #{{ servico.orcamento.id }}
+                {% else %}
+                    -
+                {% endif %}
+            </strong>
+        </div>
+
+    </div>
+
+
+    <!-- AGENDAMENTO -->
+
+    {% if servico.status != "Concluído" %}
+
+    <div class="bloco-agendamento">
+
+        <div class="info-agendamento">
+
+            <h3>
+                📅 Agendamento
+            </h3>
+
+            {% if servico.data_agendada %}
+
+                <p>
+                    Atendimento marcado para
+                    <strong>
+                        {{ servico.data_agendada.strftime("%d/%m/%Y") }}
+                    </strong>
+                </p>
+
+            {% else %}
+
+                <p>
+                    Este atendimento ainda não possui
+                    uma data agendada.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <form
+            method="POST"
+            action="{{ url_for(
+                'agendar_servico',
+                id=servico.id
+            ) }}"
+            class="form-agendamento"
+        >
+
+            <div>
+
+                <label for="data_agendada">
+                    Data do atendimento
+                </label>
+
+                <input
+                    type="date"
+                    id="data_agendada"
+                    name="data_agendada"
+                    value="{% if servico.data_agendada %}{{ servico.data_agendada.strftime('%Y-%m-%d') }}{% endif %}"
+                    required
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="btn-principal"
+            >
+
+                {% if servico.data_agendada %}
+                    Alterar data
+                {% else %}
+                    Agendar
+                {% endif %}
+
+            </button>
+
+        </form>
+
+    </div>
+
+    {% else %}
+
+    <div class="agendamento-concluido">
+
+        <span>
+            📅 Data realizada
+        </span>
+
+        <strong>
+            {% if servico.data_servico %}
+                {{ servico.data_servico.strftime("%d/%m/%Y") }}
+            {% else %}
+                -
+            {% endif %}
+        </strong>
+
+    </div>
+
+    {% endif %}
+
+
+    {% if servico.observacoes %}
+
+    <div class="observacao-atendimento">
+
+        <span>Observações</span>
+
+        <p>
+            {{ servico.observacoes }}
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- PAGAMENTO -->
+
+<div class="form-card detalhes-card">
+
+    <h2>💰 Pagamento</h2>
+
+    {% if servico.pagamento %}
+
+        <div class="grade-detalhes">
+
+            <div>
+                <span>Valor recebido</span>
+
+                <strong>
+                    R$ {{ "%.2f"|format(servico.pagamento.valor) }}
+                </strong>
+            </div>
+
+
+            <div>
+                <span>Forma de pagamento</span>
+
+                <strong>
+                    {{ servico.pagamento.forma_pagamento }}
+                </strong>
+            </div>
+
+
+            <div>
+                <span>Data do pagamento</span>
+
+                <strong>
+                    {{ servico.pagamento.data_pagamento.strftime("%d/%m/%Y") }}
+                </strong>
+            </div>
+
+        </div>
+
+    {% else %}
+
+        <div class="sem-registro">
+            Pagamento ainda não registrado.
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- CUSTOS -->
+
+<div class="form-card detalhes-card">
+
+    <div class="topo-detalhes-custos">
+
+        <div>
+
+            <h2>
+                📦 Custos do atendimento
+            </h2>
+
+            <p>
+                Materiais, deslocamento e outros custos.
+            </p>
+
+        </div>
+
+
+        <strong class="total-custos-atendimento">
+            R$ {{ "%.2f"|format(custo_total) }}
+        </strong>
+
+    </div>
+
+
+    {% if custos %}
+
+    <div class="tabela-responsiva">
+
+        <table class="tabela-erp">
+
+            <thead>
+                <tr>
+                    <th>Categoria</th>
+                    <th>Descrição</th>
+                    <th>Data</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+                {% for custo in custos %}
+
+                <tr>
+
+                    <td>
+                        {{ custo.categoria }}
+                    </td>
+
+                    <td>
+                        {{ custo.descricao or "-" }}
+                    </td>
+
+                    <td>
+                        {{ custo.data_custo.strftime("%d/%m/%Y") }}
+                    </td>
+
+                    <td>
+                        <strong>
+                            R$ {{ "%.2f"|format(custo.valor) }}
+                        </strong>
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+        <div class="sem-registro">
+            Nenhum custo registrado neste atendimento.
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- RESULTADO -->
+
+<div class="resultado-atendimento">
+
+    <div>
+
+        <span>
+            Valor do serviço
+        </span>
+
+        <strong>
+            R$ {{ "%.2f"|format(servico.valor or 0) }}
+        </strong>
+
+    </div>
+
+
+    <div class="operador">
+        −
+    </div>
+
+
+    <div>
+
+        <span>
+            Custos
+        </span>
+
+        <strong>
+            R$ {{ "%.2f"|format(custo_total) }}
+        </strong>
+
+    </div>
+
+
+    <div class="operador">
+        =
+    </div>
+
+
+    <div class="resultado-final">
+
+        <span>
+            Resultado do atendimento
+        </span>
+
+        <strong>
+            R$ {{ "%.2f"|format(resultado_servico) }}
+        </strong>
+
+    </div>
+
+</div>
+
+{% endblock %}

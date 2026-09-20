@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}
+Dashboard | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<header class="topo">
+
+    <div>
+        <h1>Dashboard Gerencial</h1>
+        <p>Visão geral da operação da DR Reparos</p>
+    </div>
+
+    <div class="status">
+        ● Sistema online
+    </div>
+
+</header>
+
+
+<section class="cards">
+
+    <div class="card">
+        <span>Faturamento do mês</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(faturamento)|replace(".", ",") }}
+        </strong>
+    </div>
+
+
+    <div class="card">
+        <span>Custos + despesas</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(despesas_totais)|replace(".", ",") }}
+        </strong>
+    </div>
+
+
+    <div class="card destaque">
+        <span>Resultado</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(resultado)|replace(".", ",") }}
+        </strong>
+    </div>
+
+
+    <div class="card">
+        <span>Ticket médio</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(ticket_medio)|replace(".", ",") }}
+        </strong>
+    </div>
+
+
+    <div class="card">
+        <span>Serviços concluídos</span>
+
+        <strong>
+            {{ servicos_concluidos }}
+        </strong>
+    </div>
+
+
+    <div class="card">
+        <span>Conversão de orçamentos</span>
+
+        <strong>
+            {{ taxa_conversao }}%
+        </strong>
+    </div>
+
+</section>
+
+
+<section class="painel meta-painel">
+
+    <div class="titulo-painel">
+
+        <div>
+            <h2>🎯 Meta do mês</h2>
+
+            <p>
+                R$ {{ "%.2f"|format(faturamento)|replace(".", ",") }}
+                de
+                R$ {{ "%.2f"|format(valor_meta)|replace(".", ",") }}
+            </p>
+        </div>
+
+
+        <a
+            href="{{ url_for('configurar_meta') }}"
+            class="botao"
+        >
+            Configurar meta
+        </a>
+
+    </div>
+
+
+    <div class="barra-meta">
+    <progress
+        class="progresso-meta"
+        value="{{ percentual_meta }}"
+        max="100">
+        {{ percentual_meta }}%
+    </progress>
+</div>
+
+    <strong class="percentual-meta">
+        {{ percentual_meta }}%
+    </strong>
+
+</section>
+
+
+<section class="painel painel-espaco">
+
+    <div class="titulo-painel">
+
+        <div>
+            <h2>Indicadores comerciais</h2>
+            <p>Orçamentos e operação</p>
+        </div>
+
+    </div>
+
+
+    <section class="cards">
+
+        <div class="card">
+            <span>Clientes</span>
+            <strong>{{ quantidade_clientes }}</strong>
+        </div>
+
+        <div class="card">
+            <span>Orçamentos</span>
+            <strong>{{ quantidade_orcamentos }}</strong>
+        </div>
+
+        <div class="card">
+            <span>Serviços</span>
+            <strong>{{ quantidade_servicos }}</strong>
+        </div>
+
+    </section>
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}
+Editar Material | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecalho-pagina">
+
+    <div>
+        <h1>Editar Material</h1>
+
+        <p>
+            Atualize as informações e o estoque do material.
+        </p>
+    </div>
+
+</div>
+
+
+<div class="form-card">
+
+    <form method="POST">
+
+
+        <div class="linha-formulario">
+
+            <div class="form-grupo">
+
+                <label>
+                    Código *
+                </label>
+
+                <input
+                    type="text"
+                    name="codigo"
+                    value="{{ material.codigo }}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Categoria
+                </label>
+
+                <input
+                    type="text"
+                    name="categoria"
+                    value="{{ material.categoria or '' }}"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label>
+                Descrição *
+            </label>
+
+            <input
+                type="text"
+                name="descricao"
+                value="{{ material.descricao }}"
+                required
+            >
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label>
+                Complemento
+            </label>
+
+            <input
+                type="text"
+                name="complemento"
+                value="{{ material.complemento or '' }}"
+            >
+
+        </div>
+
+
+        <div class="linha-formulario">
+
+            <div class="form-grupo">
+
+                <label>
+                    Quantidade
+                </label>
+
+                <input
+                    type="number"
+                    name="quantidade"
+                    min="0"
+                    value="{{ material.quantidade or 0 }}"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Custo médio
+                </label>
+
+                <input
+                    type="number"
+                    name="custo_medio"
+                    min="0"
+                    step="0.01"
+                    value="{{ material.custo_medio or 0 }}"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Valor de venda
+                </label>
+
+                <input
+                    type="number"
+                    name="valor_venda"
+                    min="0"
+                    step="0.01"
+                    value="{{ material.valor_venda or 0 }}"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="linha-formulario">
+
+            <div class="form-grupo">
+
+                <label>
+                    Estoque mínimo
+                </label>
+
+                <input
+                    type="number"
+                    name="estoque_minimo"
+                    min="0"
+                    value="{{ material.estoque_minimo or 0 }}"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Estoque máximo
+                </label>
+
+                <input
+                    type="number"
+                    name="estoque_maximo"
+                    min="0"
+                    value="{{ material.estoque_maximo or 0 }}"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label>
+
+                <input
+                    type="checkbox"
+                    name="ativo"
+                    {% if material.ativo %}checked{% endif %}
+                >
+
+                Material ativo
+
+            </label>
+
+        </div>
+
+
+        <div class="acoes-form">
+
+            <button
+                type="submit"
+                class="btn-principal"
+            >
+                Salvar alterações
+            </button>
+
+
+            <a
+                href="{{ url_for('materiais') }}"
+                class="btn-secundario"
+            >
+                Cancelar
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

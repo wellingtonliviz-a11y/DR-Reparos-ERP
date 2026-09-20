@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Clientes | DR Reparos Gestão</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <h1>👤 Clientes</h1>
+
+    <a href="{{ url_for('novo_cliente') }}">
+        + Novo Cliente
+    </a>
+
+    <br><br>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Endereço</th>
+                <th>Cadastro</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for cliente in clientes %}
+
+            <tr>
+                <td>{{ cliente.nome }}</td>
+                <td>{{ cliente.telefone }}</td>
+                <td>{{ cliente.endereco or "-" }}</td>
+                <td>
+                    {{ cliente.data_cadastro.strftime("%d/%m/%Y") }}
+                </td>
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td colspan="4">
+                    Nenhum cliente cadastrado.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    <br>
+
+    <a href="{{ url_for('inicio') }}">
+        ← Dashboard
+    </a>
+
+</body>
+</html>

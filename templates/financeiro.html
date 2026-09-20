@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}
+Financeiro | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<header class="topo">
+
+    <div>
+        <h1>Financeiro</h1>
+        <p>Entradas e saídas da DR Reparos</p>
+    </div>
+
+    <a
+        class="botao"
+        href="{{ url_for('nova_despesa') }}"
+    >
+        + Nova despesa
+    </a>
+
+</header>
+
+
+<section class="cards">
+
+    <div class="card">
+        <span>Entradas</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(total_entradas)|replace(".", ",") }}
+        </strong>
+    </div>
+
+
+    <div class="card">
+        <span>Saídas</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(total_saidas)|replace(".", ",") }}
+        </strong>
+    </div>
+
+
+    <div class="card destaque">
+        <span>Saldo</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(saldo)|replace(".", ",") }}
+        </strong>
+    </div>
+
+</section>
+
+
+<section class="painel">
+
+    <div class="titulo-painel">
+        <div>
+            <h2>Receitas de Serviços</h2>
+            <p>Pagamentos registrados</p>
+        </div>
+    </div>
+
+
+    <div class="tabela-container">
+
+        <table>
+
+            <thead>
+            <tr>
+                <th>Data</th>
+                <th>Cliente</th>
+                <th>Serviço</th>
+                <th>Pagamento</th>
+                <th>Valor</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            {% for pagamento in pagamentos %}
+
+            <tr>
+
+                <td>
+                    {{ pagamento.data_pagamento.strftime("%d/%m/%Y") }}
+                </td>
+
+                <td>
+                    {{ pagamento.servico.cliente.nome }}
+                </td>
+
+                <td>
+                    {{ pagamento.servico.descricao }}
+                </td>
+
+                <td>
+                    {{ pagamento.forma_pagamento }}
+                </td>
+
+                <td>
+                    R$ {{ "%.2f"|format(pagamento.valor)|replace(".", ",") }}
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td colspan="5">
+                    Nenhuma receita registrada.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+{% endblock %}

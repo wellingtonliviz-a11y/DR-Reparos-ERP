@@ -1,0 +1,486 @@
+{% extends "base.html" %}
+
+{% block title %}
+Materiais / Estoque | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecalho-pagina">
+
+    <div>
+        <h1>Materiais / Estoque</h1>
+
+        <p>
+            Controle de materiais utilizados nos atendimentos.
+        </p>
+    </div>
+
+    <button
+        type="button"
+        class="btn-principal"
+        onclick="abrirCadastroMaterial()"
+    >
+        + Novo material
+    </button>
+
+</div>
+
+
+<!-- INDICADORES -->
+
+<div class="cards-estoque">
+
+    <div class="card-indicador">
+        <span>Materiais cadastrados</span>
+
+        <strong>
+            {{ total_materiais }}
+        </strong>
+    </div>
+
+
+    <div class="card-indicador">
+        <span>Estoque baixo</span>
+
+        <strong>
+            {{ estoque_baixo }}
+        </strong>
+    </div>
+
+
+    <div class="card-indicador">
+        <span>Sem estoque</span>
+
+        <strong>
+            {{ sem_estoque }}
+        </strong>
+    </div>
+
+
+    <div class="card-indicador">
+        <span>Custo do estoque</span>
+
+        <strong>
+            R$ {{ "%.2f"|format(valor_estoque) }}
+        </strong>
+    </div>
+
+</div>
+
+
+<!-- CADASTRO -->
+
+<div
+    id="cadastro-material"
+    class="form-card cadastro-material"
+    style="display: none;"
+>
+
+    <div class="topo-cadastro-material">
+
+        <div>
+            <h2>Novo material</h2>
+
+            <p>
+                Cadastre um item que ainda não existe no estoque.
+            </p>
+        </div>
+
+        <button
+            type="button"
+            class="btn-fechar"
+            onclick="fecharCadastroMaterial()"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <form method="POST">
+
+        <div class="linha-formulario">
+
+            <div class="form-grupo">
+
+                <label>
+                    Código *
+                </label>
+
+                <input
+                    type="text"
+                    name="codigo"
+                    placeholder="Ex.: MAT013"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Categoria
+                </label>
+
+                <input
+                    type="text"
+                    name="categoria"
+                    placeholder="Ex.: Hidráulica"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label>
+                Descrição *
+            </label>
+
+            <input
+                type="text"
+                name="descricao"
+                placeholder="Ex.: Sifão universal"
+                required
+            >
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label>
+                Complemento
+            </label>
+
+            <input
+                type="text"
+                name="complemento"
+                placeholder="Marca, modelo, medida..."
+            >
+
+        </div>
+
+
+        <div class="linha-formulario">
+
+            <div class="form-grupo">
+
+                <label>
+                    Quantidade inicial
+                </label>
+
+                <input
+                    type="number"
+                    name="quantidade"
+                    min="0"
+                    value="0"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Custo médio
+                </label>
+
+                <input
+                    type="number"
+                    name="custo_medio"
+                    min="0"
+                    step="0.01"
+                    value="0.00"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Valor de venda
+                </label>
+
+                <input
+                    type="number"
+                    name="valor_venda"
+                    min="0"
+                    step="0.01"
+                    value="0.00"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="linha-formulario">
+
+            <div class="form-grupo">
+
+                <label>
+                    Estoque mínimo
+                </label>
+
+                <input
+                    type="number"
+                    name="estoque_minimo"
+                    min="0"
+                    value="0"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Estoque máximo
+                </label>
+
+                <input
+                    type="number"
+                    name="estoque_maximo"
+                    min="0"
+                    value="0"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="acoes-form">
+
+            <button
+                type="submit"
+                class="btn-principal"
+            >
+                Salvar material
+            </button>
+
+            <button
+                type="button"
+                class="btn-secundario"
+                onclick="fecharCadastroMaterial()"
+            >
+                Cancelar
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- TABELA -->
+
+<div class="card-tabela">
+
+    <div class="topo-tabela">
+
+        <div>
+            <h2>Estoque atual</h2>
+
+            <p>
+                {{ materiais|length }} materiais encontrados
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="tabela-responsiva">
+
+        <table class="tabela-erp">
+
+            <thead>
+
+                <tr>
+                    <th>Código</th>
+                    <th>Material</th>
+                    <th>Categoria</th>
+                    <th>Qtd.</th>
+                    <th>Custo médio</th>
+                    <th>Venda</th>
+                    <th>Mín.</th>
+                    <th>Máx.</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for material in materiais %}
+
+                <tr>
+
+                    <td>
+                        {{ material.codigo }}
+                    </td>
+
+
+                    <td>
+
+                        <strong>
+                            {{ material.descricao }}
+                        </strong>
+
+                        {% if material.complemento %}
+
+                            <br>
+
+                            <small>
+                                {{ material.complemento }}
+                            </small>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+                        {{ material.categoria or "-" }}
+                    </td>
+
+
+                    <td>
+                        <strong>
+                            {{ material.quantidade or 0 }}
+                        </strong>
+                    </td>
+
+
+                    <td>
+                        R$ {{ "%.2f"|format(material.custo_medio or 0) }}
+                    </td>
+
+
+                    <td>
+                        R$ {{ "%.2f"|format(material.valor_venda or 0) }}
+                    </td>
+
+
+                    <td>
+                        {{ material.estoque_minimo or 0 }}
+                    </td>
+
+
+                    <td>
+                        {{ material.estoque_maximo or 0 }}
+                    </td>
+
+
+                    <td>
+
+                        {% if not material.ativo %}
+
+                            <span class="status-inativo">
+                                Inativo
+                            </span>
+
+                        {% elif (material.quantidade or 0) <= 0 %}
+
+                            <span class="status-sem-estoque">
+                                Sem estoque
+                            </span>
+
+                        {% elif
+                            (material.estoque_minimo or 0) > 0
+                            and
+                            (material.quantidade or 0)
+                            <=
+                            (material.estoque_minimo or 0)
+                        %}
+
+                            <span class="status-estoque-baixo">
+                                Estoque baixo
+                            </span>
+
+                        {% else %}
+
+                            <span class="status-ativo">
+                                Normal
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="{{ url_for(
+                                'editar_material',
+                                id=material.id
+                            ) }}"
+                            class="btn-editar"
+                        >
+                            Editar
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+                    <td colspan="10">
+                        Nenhum material cadastrado.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+function abrirCadastroMaterial() {
+
+    const cadastro =
+        document.getElementById(
+            "cadastro-material"
+        );
+
+    cadastro.style.display =
+        "block";
+
+    cadastro.scrollIntoView({
+        behavior: "smooth"
+    });
+
+}
+
+
+function fecharCadastroMaterial() {
+
+    document.getElementById(
+        "cadastro-material"
+    ).style.display = "none";
+
+}
+
+</script>
+
+{% endblock %}

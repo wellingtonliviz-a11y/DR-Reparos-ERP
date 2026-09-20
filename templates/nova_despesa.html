@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}
+Nova Despesa | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<header class="topo">
+
+    <div>
+        <h1>Nova Despesa</h1>
+        <p>Registrar uma saída da empresa</p>
+    </div>
+
+</header>
+
+
+<section class="painel formulario-card">
+
+    <form method="POST" class="formulario">
+
+        <label>Categoria *</label>
+
+        <select name="categoria" required>
+
+            <option value="">
+                Selecione
+            </option>
+
+            <option value="Material">
+                Material
+            </option>
+
+            <option value="Combustível">
+                Combustível
+            </option>
+
+            <option value="Ferramentas">
+                Ferramentas
+            </option>
+
+            <option value="Publicidade">
+                Publicidade
+            </option>
+
+            <option value="Mensalidades">
+                Mensalidades
+            </option>
+
+            <option value="Outros">
+                Outros
+            </option>
+
+        </select>
+
+
+        <label>Descrição *</label>
+
+        <input
+            type="text"
+            name="descricao"
+            placeholder="Ex.: Compra de ferramentas"
+            required
+        >
+
+
+        <label>Valor *</label>
+
+        <input
+            type="number"
+            name="valor"
+            step="0.01"
+            min="0.01"
+            required
+        >
+
+
+        <button
+            type="submit"
+            class="botao botao-form"
+        >
+            Registrar despesa
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,541 @@
+{% extends "base.html" %}
+
+{% block title %}
+Finalizar Serviço | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecalho-pagina">
+
+    <div>
+        <h1>Finalizar Serviço</h1>
+
+        <p>
+            Registre o pagamento, materiais e custos
+            do atendimento.
+        </p>
+    </div>
+
+</div>
+
+
+{% if erro %}
+
+<div class="alerta-erro">
+    ⚠️ {{ erro }}
+</div>
+
+{% endif %}
+
+
+<div class="resumo-finalizacao">
+
+    <div>
+        <span>Cliente</span>
+
+        <strong>
+            {{ servico.cliente.nome }}
+        </strong>
+    </div>
+
+    <div>
+        <span>Serviço</span>
+
+        <strong>
+            {{ servico.descricao }}
+        </strong>
+    </div>
+
+    <div>
+        <span>Valor do serviço</span>
+
+        <strong class="valor-destaque">
+            R$ {{ "%.2f"|format(servico.valor) }}
+        </strong>
+    </div>
+
+</div>
+
+
+<form method="POST">
+
+
+    <!-- =========================================
+         PAGAMENTO
+    ========================================== -->
+
+    <div class="form-card finalizar-card">
+
+        <h2>💰 Pagamento</h2>
+
+        <div class="form-grupo">
+
+            <label>
+                Forma de pagamento *
+            </label>
+
+            <select
+                name="forma_pagamento"
+                required
+            >
+
+                <option value="">
+                    Selecione
+                </option>
+
+                <option value="PIX">
+                    PIX
+                </option>
+
+                <option value="Dinheiro">
+                    Dinheiro
+                </option>
+
+                <option value="Débito">
+                    Cartão de débito
+                </option>
+
+                <option value="Crédito">
+                    Cartão de crédito
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         MATERIAIS
+    ========================================== -->
+
+    <div class="form-card finalizar-card">
+
+        <div class="topo-materiais-servico">
+
+            <div>
+
+                <h2>
+                    📦 Materiais utilizados
+                </h2>
+
+                <p>
+                    Selecione os materiais usados no atendimento.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="btn-principal"
+                onclick="adicionarMaterial()"
+            >
+                + Adicionar material
+            </button>
+
+        </div>
+
+
+        <div id="lista-materiais">
+
+            <!-- As linhas serão adicionadas aqui -->
+
+        </div>
+
+
+        <div
+            id="sem-materiais"
+            class="sem-materiais"
+        >
+            Nenhum material do estoque adicionado.
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         MATERIAL NÃO CADASTRADO
+    ========================================== -->
+
+    <div class="form-card finalizar-card">
+
+        <h2>
+            ➕ Material não cadastrado
+        </h2>
+
+        <p class="texto-apoio">
+            Use esta opção quando comprar uma peça
+            especificamente para este atendimento.
+        </p>
+
+
+        <div class="linha-formulario">
+
+            <div class="form-grupo">
+
+                <label>
+                    Descrição
+                </label>
+
+                <input
+                    type="text"
+                    name="material_manual_descricao"
+                    placeholder="Ex.: Reparo específico da torneira"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Custo
+                </label>
+
+                <input
+                    type="number"
+                    name="material_manual_valor"
+                    min="0"
+                    step="0.01"
+                    placeholder="0,00"
+                >
+
+            </div>
+
+        </div>
+
+        <small>
+            Este material será lançado como custo do serviço,
+            mas não altera o estoque.
+        </small>
+
+    </div>
+
+
+    <!-- =========================================
+         OUTROS CUSTOS
+    ========================================== -->
+
+    <div class="form-card finalizar-card">
+
+        <h2>
+            🚗 Outros custos
+        </h2>
+
+
+        <div class="linha-formulario">
+
+            <div class="form-grupo">
+
+                <label>
+                    Deslocamento
+                </label>
+
+                <input
+                    type="number"
+                    name="deslocamento"
+                    min="0"
+                    step="0.01"
+                    value="0.00"
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Outros custos
+                </label>
+
+                <input
+                    type="number"
+                    name="outros"
+                    min="0"
+                    step="0.01"
+                    value="0.00"
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         FINALIZAR
+    ========================================== -->
+
+    <div class="acoes-finalizacao">
+
+        <a
+            href="{{ url_for('servicos') }}"
+            class="btn-secundario"
+        >
+            Cancelar
+        </a>
+
+
+        <button
+            type="submit"
+            class="btn-principal btn-finalizar-servico"
+        >
+            ✓ Finalizar serviço
+        </button>
+
+    </div>
+
+
+</form>
+
+
+<!-- =========================================
+     MODELO DA LINHA DE MATERIAL
+========================================== -->
+
+<template id="template-material">
+
+    <div class="linha-material">
+
+        <div class="campo-material">
+
+            <label>
+                Material
+            </label>
+
+            <select
+                name="material_id[]"
+                class="select-material"
+                onchange="atualizarMaterial(this)"
+            >
+
+                <option value="">
+                    Selecione
+                </option>
+
+                {% for material in materiais %}
+
+                <option
+                    value="{{ material.id }}"
+                    data-estoque="{{ material.quantidade or 0 }}"
+                    data-custo="{{ material.custo_medio or 0 }}"
+                >
+
+                    {{ material.descricao }}
+                    — Estoque: {{ material.quantidade or 0 }}
+                    — R$ {{ "%.2f"|format(material.custo_medio or 0) }}
+
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="campo-quantidade">
+
+            <label>
+                Quantidade
+            </label>
+
+            <input
+                type="number"
+                name="material_quantidade[]"
+                value="1"
+                min="1"
+                class="quantidade-material"
+                oninput="calcularLinha(this)"
+            >
+
+        </div>
+
+
+        <div class="campo-info-material">
+
+            <label>
+                Custo
+            </label>
+
+            <div class="custo-material">
+                R$ 0,00
+            </div>
+
+            <small class="estoque-material">
+                Estoque disponível: -
+            </small>
+
+        </div>
+
+
+        <div class="campo-remover">
+
+            <button
+                type="button"
+                class="btn-remover-material"
+                onclick="removerMaterial(this)"
+                title="Remover material"
+            >
+                ×
+            </button>
+
+        </div>
+
+    </div>
+
+</template>
+
+
+<script>
+
+const listaMateriais =
+    document.getElementById("lista-materiais");
+
+const semMateriais =
+    document.getElementById("sem-materiais");
+
+const templateMaterial =
+    document.getElementById("template-material");
+
+
+function adicionarMaterial() {
+
+    const clone =
+        templateMaterial.content.cloneNode(true);
+
+    listaMateriais.appendChild(clone);
+
+    atualizarAvisoMateriais();
+}
+
+
+function removerMaterial(botao) {
+
+    const linha =
+        botao.closest(".linha-material");
+
+    linha.remove();
+
+    atualizarAvisoMateriais();
+}
+
+
+function atualizarAvisoMateriais() {
+
+    const quantidadeLinhas =
+        listaMateriais.querySelectorAll(
+            ".linha-material"
+        ).length;
+
+    if (quantidadeLinhas > 0) {
+
+        semMateriais.style.display =
+            "none";
+
+    } else {
+
+        semMateriais.style.display =
+            "block";
+    }
+}
+
+
+function atualizarMaterial(select) {
+
+    const linha =
+        select.closest(".linha-material");
+
+    const opcao =
+        select.options[select.selectedIndex];
+
+    const estoque =
+        parseInt(
+            opcao.dataset.estoque || "0"
+        );
+
+    const custo =
+        parseFloat(
+            opcao.dataset.custo || "0"
+        );
+
+    const infoEstoque =
+        linha.querySelector(
+            ".estoque-material"
+        );
+
+    const quantidade =
+        linha.querySelector(
+            ".quantidade-material"
+        );
+
+
+    if (!select.value) {
+
+        infoEstoque.textContent =
+            "Estoque disponível: -";
+
+        quantidade.removeAttribute("max");
+
+    } else {
+
+        infoEstoque.textContent =
+            "Estoque disponível: " +
+            estoque;
+
+        quantidade.max =
+            estoque;
+    }
+
+
+    calcularLinha(
+        quantidade
+    );
+}
+
+
+function calcularLinha(input) {
+
+    const linha =
+        input.closest(".linha-material");
+
+    const select =
+        linha.querySelector(
+            ".select-material"
+        );
+
+    const opcao =
+        select.options[select.selectedIndex];
+
+    const custo =
+        parseFloat(
+            opcao.dataset.custo || "0"
+        );
+
+    const quantidade =
+        parseInt(
+            input.value || "0"
+        );
+
+    const total =
+        custo * quantidade;
+
+
+    linha.querySelector(
+        ".custo-material"
+    ).textContent =
+        total.toLocaleString(
+            "pt-BR",
+            {
+                style: "currency",
+                currency: "BRL"
+            }
+        );
+}
+
+</script>
+
+{% endblock %}
