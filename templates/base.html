@@ -135,13 +135,19 @@
 
 </div>
 <script>
-    // Sempre abre a nova tela no topo
+    // No celular, abre a nova página diretamente no conteúdo
     window.addEventListener("pageshow", function () {
-        window.scrollTo(0, 0);
-
         const conteudo = document.querySelector(".conteudo");
-        if (conteudo) {
-            conteudo.scrollTop = 0;
+
+        if (window.innerWidth <= 650 && conteudo) {
+            setTimeout(function () {
+                conteudo.scrollIntoView({
+                    behavior: "instant",
+                    block: "start"
+                });
+            }, 50);
+        } else {
+            window.scrollTo(0, 0);
         }
     });
 </script>
