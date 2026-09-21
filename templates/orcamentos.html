@@ -77,7 +77,7 @@ Orçamentos | DR Reparos ERP
 
                     <!-- SERVIÇO -->
                     <td>
-                        {{ orcamento.descricao }}
+                        {{ orcamento.descricao|replace("\n", "<br>")|safe }}
                     </td>
 
 
@@ -130,6 +130,13 @@ Orçamentos | DR Reparos ERP
 
                             {% if orcamento.status != "Aprovado"
                                   and orcamento.status != "Não aprovado" %}
+
+                                <a
+                                    href="{{ url_for('editar_orcamento', id=orcamento.id) }}"
+                                    class="btn-detalhes"
+                                >
+                                    ✏️ Editar
+                                </a>
 
                                 <!-- APROVAR -->
 

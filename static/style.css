@@ -67,10 +67,17 @@ nav a {
     transition: 0.2s;
 }
 
-nav a:hover,
 nav a.ativo {
     background: #ff7900;
     color: white;
+}
+
+/* Hover somente em dispositivos que realmente possuem mouse */
+@media (hover: hover) and (pointer: fine) {
+    nav a:hover {
+        background: #ff7900;
+        color: white;
+    }
 }
 
 

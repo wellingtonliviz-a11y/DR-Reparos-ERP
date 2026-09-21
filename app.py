@@ -193,6 +193,33 @@ class Orcamento(db.Model):
         uselist=False
     )
 
+    itens = db.relationship(
+        "OrcamentoItem",
+        back_populates="orcamento",
+        cascade="all, delete-orphan",
+        order_by="OrcamentoItem.id"
+    )
+
+
+class OrcamentoItem(db.Model):
+    __tablename__ = "orcamento_itens"
+
+    id = db.Column(db.Integer, primary_key=True)
+    orcamento_id = db.Column(
+        db.Integer,
+        db.ForeignKey("orcamentos.id"),
+        nullable=False
+    )
+    descricao = db.Column(db.Text, nullable=False)
+    quantidade = db.Column(db.Numeric(10, 2), nullable=False, default=1)
+    valor_unitario = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    valor_total = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+
+    orcamento = db.relationship(
+        "Orcamento",
+        back_populates="itens"
+    )
+
 
 # =========================================================
 # SERVIÇOS
@@ -717,67 +744,157 @@ def orcamentos():
 @app.route("/orcamentos/novo", methods=["GET", "POST"])
 def novo_orcamento():
 
-    lista_clientes = Cliente.query.order_by(
-        Cliente.nome
-    ).all()
-
-    lista_catalogo = CatalogoServico.query.filter_by(
-        ativo=True
-    ).order_by(
+    lista_clientes = Cliente.query.order_by(Cliente.nome).all()
+    lista_catalogo = CatalogoServico.query.filter_by(ativo=True).order_by(
         CatalogoServico.descricao.asc()
     ).all()
 
     if request.method == "POST":
+        cliente_id = int(request.form["cliente_id"])
+        validade_dias = int(request.form.get("validade_dias", 15))
+        observacoes = request.form.get("observacoes", "").strip() or None
 
-        cliente_id = int(
-            request.form["cliente_id"]
+        descricoes = request.form.getlist("item_descricao")
+        quantidades = request.form.getlist("item_quantidade")
+        valores = request.form.getlist("item_valor")
+
+        itens = []
+        for descricao, quantidade_texto, valor_texto in zip(
+            descricoes, quantidades, valores
+        ):
+            descricao = descricao.strip()
+            if not descricao:
+                continue
+            quantidade = Decimal(int(Decimal(quantidade_texto.replace(",", ".") or "1")))
+            valor_unitario = Decimal(valor_texto.replace(",", ".") or "0")
+            if quantidade <= 0:
+                continue
+            valor_total = (quantidade * valor_unitario).quantize(Decimal("0.01"))
+            itens.append((descricao, quantidade, valor_unitario, valor_total))
+
+        # Compatibilidade com o formulário antigo.
+        if not itens:
+            descricao = request.form.get("descricao", "").strip()
+            valor_texto = request.form.get("valor", "0").strip().replace(",", ".")
+            if descricao:
+                valor = Decimal(valor_texto or "0")
+                itens.append((descricao, Decimal("1"), valor, valor))
+
+        if not itens:
+            return redirect(url_for("novo_orcamento"))
+
+        total = sum((item[3] for item in itens), Decimal("0.00"))
+        descricao_resumo = "\n".join(
+            f"{int(item[1])}x - {item[0]}" for item in itens
         )
-
-        descricao = request.form[
-            "descricao"
-        ].strip()
-
-        valor_texto = request.form[
-            "valor"
-        ].strip().replace(",", ".")
-
-        valor = Decimal(valor_texto)
-
-        validade_dias = int(
-            request.form.get(
-                "validade_dias",
-                15
-            )
-        )
-
-        observacoes = request.form.get(
-            "observacoes",
-            ""
-        ).strip() or None
 
         novo = Orcamento(
             cliente_id=cliente_id,
-            descricao=descricao,
-            valor=valor,
+            descricao=descricao_resumo,
+            valor=total,
             validade_dias=validade_dias,
-
-            # NOVO PADRÃO
             status="Aguardando aprovação",
-
             observacoes=observacoes
         )
 
         db.session.add(novo)
-        db.session.commit()
+        db.session.flush()
 
-        return redirect(
-            url_for("orcamentos")
-        )
+        for descricao, quantidade, valor_unitario, valor_total in itens:
+            db.session.add(OrcamentoItem(
+                orcamento_id=novo.id,
+                descricao=descricao,
+                quantidade=quantidade,
+                valor_unitario=valor_unitario,
+                valor_total=valor_total
+            ))
+
+        db.session.commit()
+        return redirect(url_for("orcamentos"))
 
     return render_template(
         "novo_orcamento.html",
         clientes=lista_clientes,
         catalogo=lista_catalogo
+    )
+
+
+@app.route("/orcamentos/<int:id>/editar", methods=["GET", "POST"])
+def editar_orcamento(id):
+
+    orcamento = db.get_or_404(Orcamento, id)
+
+    if orcamento.status != "Aguardando aprovação":
+        return redirect(url_for("orcamentos"))
+
+    lista_clientes = Cliente.query.order_by(Cliente.nome).all()
+    lista_catalogo = CatalogoServico.query.filter_by(ativo=True).order_by(
+        CatalogoServico.descricao.asc()
+    ).all()
+
+    itens_tela = orcamento.itens[:] if orcamento.itens else [{
+        "descricao": orcamento.descricao,
+        "quantidade": Decimal("1"),
+        "valor_unitario": Decimal(orcamento.valor or 0),
+        "valor_total": Decimal(orcamento.valor or 0)
+    }]
+
+    if request.method == "POST":
+        cliente_id = int(request.form["cliente_id"])
+        validade_dias = int(request.form.get("validade_dias", 15))
+        observacoes = request.form.get("observacoes", "").strip() or None
+
+        descricoes = request.form.getlist("item_descricao")
+        quantidades = request.form.getlist("item_quantidade")
+        valores = request.form.getlist("item_valor")
+
+        itens = []
+        for descricao, quantidade_texto, valor_texto in zip(
+            descricoes, quantidades, valores
+        ):
+            descricao = descricao.strip()
+            if not descricao:
+                continue
+            quantidade = Decimal(int(Decimal(quantidade_texto.replace(",", ".") or "1")))
+            valor_unitario = Decimal(valor_texto.replace(",", ".") or "0")
+            if quantidade <= 0:
+                continue
+            valor_total = (quantidade * valor_unitario).quantize(Decimal("0.01"))
+            itens.append((descricao, quantidade, valor_unitario, valor_total))
+
+        if not itens:
+            return redirect(url_for("editar_orcamento", id=id))
+
+        orcamento.cliente_id = cliente_id
+        orcamento.valor = sum((item[3] for item in itens), Decimal("0.00"))
+        orcamento.validade_dias = validade_dias
+        orcamento.observacoes = observacoes
+        orcamento.descricao = "\n".join(
+            f"{int(item[1])}x - {item[0]}" for item in itens
+        )
+
+        for item in list(orcamento.itens):
+            db.session.delete(item)
+        db.session.flush()
+
+        for descricao, quantidade, valor_unitario, valor_total in itens:
+            db.session.add(OrcamentoItem(
+                orcamento_id=orcamento.id,
+                descricao=descricao,
+                quantidade=quantidade,
+                valor_unitario=valor_unitario,
+                valor_total=valor_total
+            ))
+
+        db.session.commit()
+        return redirect(url_for("orcamentos"))
+
+    return render_template(
+        "novo_orcamento.html",
+        clientes=lista_clientes,
+        catalogo=lista_catalogo,
+        orcamento=orcamento,
+        itens_edicao=itens_tela
     )
 
 
@@ -791,14 +908,23 @@ def aprovar_orcamento(id):
 
     if orcamento.servico is None:
 
+        descricao_servico = (
+            "\n".join(
+                f"{int(item.quantidade)}x - {item.descricao}"
+                for item in orcamento.itens
+            )
+            if orcamento.itens
+            else orcamento.descricao
+        )
+
         novo_servico = Servico(
-    numero_os=orcamento.id,
-    cliente_id=orcamento.cliente_id,
-    orcamento_id=orcamento.id,
-    descricao=orcamento.descricao,
-    valor=orcamento.valor,
-    status="Aguardando execução"
-)
+            numero_os=orcamento.id,
+            cliente_id=orcamento.cliente_id,
+            orcamento_id=orcamento.id,
+            descricao=descricao_servico,
+            valor=orcamento.valor,
+            status="Aguardando execução"
+        )
 
         db.session.add(novo_servico)
 
@@ -1139,113 +1265,72 @@ def gerar_orcamento_pdf(id):
     )
 
     # =====================================================
-    # SERVIÇO
+    # SERVIÇOS / ITENS
     # =====================================================
 
-    elementos.append(
-        Paragraph(
-            "SERVIÇO",
-            estilo_laranja
+    elementos.append(Paragraph("SERVIÇOS", estilo_laranja))
+    elementos.append(Spacer(1, 3 * mm))
+
+    itens_pdf = orcamento.itens
+    if not itens_pdf:
+        itens_pdf = [
+            type(
+                "ItemLegado",
+                (),
+                {
+                    "descricao": orcamento.descricao,
+                    "quantidade": Decimal("1"),
+                    "valor_unitario": Decimal(orcamento.valor or 0),
+                    "valor_total": Decimal(orcamento.valor or 0)
+                }
+            )()
+        ]
+
+    def dinheiro(valor):
+        return (
+            f"R$ {Decimal(valor):,.2f}"
+            .replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
         )
-    )
 
-    elementos.append(
-        Spacer(1, 3 * mm)
-    )
+    tabela_dados = [[
+        Paragraph("<b>Descrição</b>", estilo_normal),
+        Paragraph("<b>Qtd.</b>", estilo_normal),
+        Paragraph("<b>Valor unit.</b>", estilo_normal),
+        Paragraph("<b>Total</b>", estilo_normal)
+    ]]
 
-    valor_formatado = (
-        f"{float(orcamento.valor):,.2f}"
-        .replace(",", "X")
-        .replace(".", ",")
-        .replace("X", ".")
-    )
+    for item in itens_pdf:
+        qtd = Decimal(item.quantidade or 0)
+        unit = Decimal(item.valor_unitario or 0)
+        total_item = Decimal(item.valor_total or (qtd * unit))
+        tabela_dados.append([
+            Paragraph(str(item.descricao).replace("\n", "<br/>"), estilo_normal),
+            str(int(qtd)),
+            dinheiro(unit),
+            dinheiro(total_item)
+        ])
 
     tabela_servico = Table(
-        [
-            [
-                Paragraph(
-                    "<b>Descrição</b>",
-                    estilo_normal
-                ),
-                Paragraph(
-                    "<b>Valor</b>",
-                    estilo_normal
-                )
-            ],
-            [
-                Paragraph(
-                    orcamento.descricao,
-                    estilo_normal
-                ),
-                f"R$ {valor_formatado}"
-            ]
-        ],
-        colWidths=[
-            135 * mm,
-            39 * mm
-        ]
+        tabela_dados,
+        colWidths=[86 * mm, 18 * mm, 35 * mm, 35 * mm],
+        repeatRows=1
     )
 
-    tabela_servico.setStyle(
-    TableStyle([
-        (
-            "BACKGROUND",
-            (0, 0),
-            (-1, 0),
-            colors.HexColor("#FFF3E8")
-        ),
-        (
-            "TEXTCOLOR",
-            (0, 0),
-            (-1, 0),
-            colors.HexColor("#111111")
-        ),
-        (
-            "FONTNAME",
-            (0, 0),
-            (-1, 0),
-            "Helvetica-Bold"
-        ),
-        (
-            "VALIGN",
-            (0, 0),
-            (-1, -1),
-            "TOP"
-        ),
-        (
-            "ALIGN",
-            (1, 0),
-            (1, -1),
-            "RIGHT"
-        ),
-        (
-            "BOX",
-            (0, 0),
-            (-1, -1),
-            0.8,
-            colors.HexColor("#FF7900")
-        ),
-        (
-            "INNERGRID",
-            (0, 0),
-            (-1, -1),
-            0.5,
-            colors.HexColor("#E5E7EB")
-        ),
-        (
-            "PADDING",
-            (0, 0),
-            (-1, -1),
-            9
-        )
-    ])
-)
+    tabela_servico.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#FFF3E8")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#111111")),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+        ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#FF7900")),
+        ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E5E7EB")),
+        ("PADDING", (0, 0), (-1, -1), 7)
+    ]))
 
     elementos.append(tabela_servico)
-
-    elementos.append(
-        Spacer(1, 5 * mm)
-    )
+    elementos.append(Spacer(1, 5 * mm))
 
     # =====================================================
     # TOTAL
@@ -1261,7 +1346,7 @@ def gerar_orcamento_pdf(id):
                 f"""
                 <para alignment="right">
                     <font size="15">
-                        <b>R$ {valor_formatado}</b>
+                        <b>{dinheiro(orcamento.valor)}</b>
                     </font>
                 </para>
                 """,
@@ -2216,9 +2301,10 @@ def configuracoes():
     )
 
 
+# Garante a criação de novas tabelas também no deploy via Gunicorn/Railway.
+with app.app_context():
+    db.create_all()
+
+
 if __name__ == "__main__":
-
-    with app.app_context():
-        db.create_all()
-
     app.run(debug=True)

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-Novo Orçamento | DR Reparos ERP
+{% if orcamento %}Editar Orçamento{% else %}Novo Orçamento{% endif %} | DR Reparos ERP
 {% endblock %}
 
 {% block content %}
@@ -9,383 +9,246 @@ Novo Orçamento | DR Reparos ERP
 <div class="pagina-formulario">
 
     <a href="{{ url_for('orcamentos') }}" class="btn-voltar">
-    ← Voltar
+        ← Voltar
     </a>
 
     <div class="form-card">
 
         <div class="cabecalho-formulario">
-            <h1>Novo Orçamento</h1>
-            <p>Registre uma nova proposta para o cliente.</p>
+            <h1>{% if orcamento %}Editar Orçamento #{{ "%04d"|format(orcamento.id) }}{% else %}Novo Orçamento{% endif %}</h1>
+            <p>Monte a proposta com um ou mais serviços, quantidades e valores.</p>
         </div>
 
-        <form method="POST">
+        <form method="POST" id="form-orcamento">
 
-            <!-- CLIENTE -->
             <div class="form-grupo">
-
-                <label for="cliente_id">
-                    Cliente *
-                </label>
-
-                <select
-                    id="cliente_id"
-                    name="cliente_id"
-                    required
-                >
-
-                    <option value="">
-                        Selecione o cliente
-                    </option>
-
+                <label for="cliente_id">Cliente *</label>
+                <select id="cliente_id" name="cliente_id" required>
+                    <option value="">Selecione o cliente</option>
                     {% for cliente in clientes %}
-                    <option value="{{ cliente.id }}">
+                    <option value="{{ cliente.id }}"
+                        {% if orcamento and orcamento.cliente_id == cliente.id %}selected{% endif %}>
                         {{ cliente.nome }}
                     </option>
                     {% endfor %}
-
                 </select>
-
             </div>
 
-
-            <!-- SERVIÇO -->
             <div class="form-grupo">
+                <label>Serviços do orçamento *</label>
+                <div id="itens-orcamento">
+                    {% if itens_edicao %}
+                        {% for item in itens_edicao %}
+                        <div class="item-orcamento">
+                            <div class="form-grupo">
+                                <label>Serviço</label>
+                                <select class="item-catalogo">
+                                    <option value="">Selecionar do catálogo</option>
+                                    <option value="manual">➕ Digitar manualmente</option>
+                                    {% for servico in catalogo %}
+                                    <option value="{{ servico.id }}"
+                                            data-descricao="{{ servico.descricao }}"
+                                            data-complemento="{{ servico.complemento or '' }}"
+                                            data-valor="{{ servico.valor_base }}">
+                                        {{ servico.descricao }} — R$ {{ "%.2f"|format(servico.valor_base) }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
 
-                <label for="catalogo_servico">
-                    Serviço
-                </label>
+                            <div class="linha-formulario item-linha">
+                                <div class="form-grupo" style="flex: 2;">
+                                    <label>Descrição *</label>
+                                    <input type="text" name="item_descricao" value="{{ item.descricao }}" required>
+                                </div>
 
-                <select id="catalogo_servico">
+                                <div class="form-grupo">
+                                    <label>Quantidade</label>
+                                    <input type="number" name="item_quantidade" class="item-quantidade" min="1" step="1" value="{{ item.quantidade|int }}" required>
+                                </div>
 
-                    <option value="">
-                        Selecione um serviço
-                    </option>
+                                <div class="form-grupo">
+                                    <label>Valor unitário</label>
+                                    <input type="number" name="item_valor" class="item-valor" min="0" step="0.01" value="{{ item.valor_unitario }}" required>
+                                </div>
 
-                    <!-- SERVIÇO MANUAL -->
-                    <option value="manual">
-                        ➕ Serviço não cadastrado / Digitar manualmente
-                    </option>
+                                <div class="form-grupo">
+                                    <label>Total</label>
+                                    <input type="text" class="item-total" value="R$ 0,00" readonly>
+                                </div>
 
-                    {% for servico in catalogo %}
+                                <button type="button" class="btn-remover-item" onclick="removerItem(this)">×</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="item-orcamento">
+                            <div class="form-grupo">
+                                <label>Serviço</label>
+                                <select class="item-catalogo">
+                                    <option value="">Selecionar do catálogo</option>
+                                    <option value="manual">➕ Digitar manualmente</option>
+                                    {% for servico in catalogo %}
+                                    <option value="{{ servico.id }}"
+                                            data-descricao="{{ servico.descricao }}"
+                                            data-complemento="{{ servico.complemento or '' }}"
+                                            data-valor="{{ servico.valor_base }}">
+                                        {{ servico.descricao }} — R$ {{ "%.2f"|format(servico.valor_base) }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
 
-                    <option
-                        value="{{ servico.id }}"
-                        data-descricao="{{ servico.descricao }}"
-                        data-complemento="{{ servico.complemento or '' }}"
-                        data-valor="{{ servico.valor_base }}"
-                    >
-                        {{ servico.descricao }}
-                        — R$ {{ "%.2f"|format(servico.valor_base) }}
-                    </option>
+                            <div class="linha-formulario item-linha">
+                                <div class="form-grupo" style="flex: 2;">
+                                    <label>Descrição *</label>
+                                    <input type="text" name="item_descricao" placeholder="Ex.: Instalação de torneira" required>
+                                </div>
 
-                    {% endfor %}
+                                <div class="form-grupo">
+                                    <label>Quantidade</label>
+                                    <input type="number" name="item_quantidade" class="item-quantidade" min="1" step="1" value="1" required>
+                                </div>
 
-                </select>
+                                <div class="form-grupo">
+                                    <label>Valor unitário</label>
+                                    <input type="number" name="item_valor" class="item-valor" min="0" step="0.01" placeholder="0,00" required>
+                                </div>
 
-                <small>
-                    Se o serviço não estiver cadastrado,
-                    escolha a opção para digitar manualmente.
-                </small>
+                                <div class="form-grupo">
+                                    <label>Total</label>
+                                    <input type="text" class="item-total" value="R$ 0,00" readonly>
+                                </div>
 
-            </div>
-
-
-            <!-- DESCRIÇÃO -->
-            <div class="form-grupo">
-
-                <label for="descricao">
-                    Descrição do serviço *
-                </label>
-
-                <textarea
-                    id="descricao"
-                    name="descricao"
-                    rows="4"
-                    placeholder="Descreva o serviço..."
-                    required
-                ></textarea>
-
-                <small id="ajuda_descricao">
-                    Selecione um serviço acima ou digite a descrição.
-                </small>
-
-            </div>
-
-
-            <!-- VALOR + VALIDADE -->
-            <div class="linha-formulario">
-
-                <div class="form-grupo campo-valor">
-
-                    <label for="valor">
-                        Valor do orçamento *
-                    </label>
-
-                    <input
-                        type="number"
-                        id="valor"
-                        name="valor"
-                        min="0"
-                        step="0.01"
-                        placeholder="0,00"
-                        required
-                    >
-
-                    <small>
-                        O valor pode ser alterado para este atendimento.
-                    </small>
-
+                                <button type="button" class="btn-remover-item" onclick="removerItem(this)">×</button>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
 
-
-                <div class="form-grupo campo-validade">
-
-                    <label for="validade_dias">
-                        Validade
-                    </label>
-
-                    <input
-                        type="number"
-                        id="validade_dias"
-                        name="validade_dias"
-                        min="1"
-                        value="15"
-                    >
-
-                    <small>
-                        Dias
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <!-- VALOR DE REFERÊNCIA -->
-            <div
-                id="aviso_valor"
-                class="aviso-valor"
-                style="display: none;"
-            >
-
-                <strong>
-                    Valor de referência do catálogo:
-                </strong>
-
-                <span id="valor_referencia">
-                    R$ 0,00
-                </span>
-
-                <p>
-                    Este é apenas o preço de referência.
-                    Você pode alterar o valor deste orçamento conforme
-                    deslocamento, dificuldade ou condições do atendimento.
-                </p>
-
-            </div>
-
-
-            <!-- AVISO SERVIÇO MANUAL -->
-            <div
-                id="aviso_manual"
-                class="aviso-valor"
-                style="display: none;"
-            >
-
-                <strong>
-                    Novo serviço
-                </strong>
-
-                <p>
-                    Digite a descrição e o valor que deseja cobrar.
-                    Este orçamento será salvo normalmente mesmo que
-                    o serviço ainda não exista no catálogo.
-                </p>
-
-            </div>
-
-
-            <!-- OBSERVAÇÕES -->
-            <div class="form-grupo">
-
-                <label for="observacoes">
-                    Observações
-                </label>
-
-                <textarea
-                    id="observacoes"
-                    name="observacoes"
-                    rows="4"
-                    placeholder="Informações adicionais..."
-                ></textarea>
-
-            </div>
-
-
-            <!-- BOTÃO -->
-            <div class="acoes-form">
-
-                <button
-                    type="submit"
-                    class="btn-principal btn-salvar-orcamento"
-                >
-                    Salvar orçamento
+                <button type="button" class="btn-secundario" onclick="adicionarItem()">
+                    + Adicionar outro serviço
                 </button>
 
+                <div class="aviso-valor" style="display:block; margin-top:15px;">
+                    <strong>Total do orçamento:</strong>
+                    <span id="total-geral">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="linha-formulario">
+                <div class="form-grupo">
+                    <label for="validade_dias">Validade</label>
+                    <input type="number" id="validade_dias" name="validade_dias" min="1" value="{{ orcamento.validade_dias if orcamento else 15 }}">
+                    <small>Dias</small>
+                </div>
+            </div>
+
+            <div class="form-grupo">
+                <label for="observacoes">Observações</label>
+                <textarea id="observacoes" name="observacoes" rows="4" placeholder="Informações adicionais...">{{ orcamento.observacoes if orcamento else '' }}</textarea>
+            </div>
+
+            <div class="acoes-form">
+                <button type="submit" class="btn-principal">
+                    {% if orcamento %}Salvar alterações{% else %}Salvar orçamento{% endif %}
+                </button>
+                <a href="{{ url_for('orcamentos') }}" class="btn-secundario">Cancelar</a>
             </div>
 
         </form>
-
     </div>
-
 </div>
 
-
-<!-- =====================================================
-     JAVASCRIPT
-====================================================== -->
-
 <script>
+function dinheiro(valor) {
+    return Number(valor || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
 
-const seletorServico =
-    document.getElementById("catalogo_servico");
+function atualizarItem(item) {
+    const qtd = parseFloat(item.querySelector(".item-quantidade")?.value || 0);
+    const valor = parseFloat(item.querySelector(".item-valor")?.value || 0);
+    const total = qtd * valor;
+    const campoTotal = item.querySelector(".item-total");
+    if (campoTotal) campoTotal.value = dinheiro(total);
+}
 
-const descricao =
-    document.getElementById("descricao");
+function atualizarTotalGeral() {
+    let total = 0;
+    document.querySelectorAll(".item-orcamento").forEach(item => {
+        const qtd = parseFloat(item.querySelector(".item-quantidade")?.value || 0);
+        const valor = parseFloat(item.querySelector(".item-valor")?.value || 0);
+        total += qtd * valor;
+        atualizarItem(item);
+    });
+    document.getElementById("total-geral").textContent = dinheiro(total);
+}
 
-const valor =
-    document.getElementById("valor");
+function configurarItem(item) {
+    const seletor = item.querySelector(".item-catalogo");
+    if (seletor) {
+        seletor.addEventListener("change", function () {
+            const opcao = this.options[this.selectedIndex];
+            const descricao = item.querySelector("[name='item_descricao']");
+            const valor = item.querySelector("[name='item_valor']");
 
-const avisoValor =
-    document.getElementById("aviso_valor");
+            if (!this.value) return;
 
-const valorReferencia =
-    document.getElementById("valor_referencia");
+            if (this.value === "manual") {
+                descricao.value = "";
+                valor.value = "";
+                descricao.focus();
+                atualizarTotalGeral();
+                return;
+            }
 
-const avisoManual =
-    document.getElementById("aviso_manual");
+            const descricaoBase = opcao.dataset.descricao || "";
+            const complemento = opcao.dataset.complemento || "";
+            descricao.value = complemento
+                ? descricaoBase + " - " + complemento
+                : descricaoBase;
 
-const ajudaDescricao =
-    document.getElementById("ajuda_descricao");
-
-
-seletorServico.addEventListener(
-    "change",
-    function () {
-
-        const opcao =
-            this.options[this.selectedIndex];
-
-
-        // ==========================================
-        // NENHUM SERVIÇO SELECIONADO
-        // ==========================================
-
-        if (!this.value) {
-
-            descricao.value = "";
-            valor.value = "";
-
-            avisoValor.style.display = "none";
-            avisoManual.style.display = "none";
-
-            ajudaDescricao.textContent =
-                "Selecione um serviço acima ou digite a descrição.";
-
-            return;
-        }
-
-
-        // ==========================================
-        // SERVIÇO NÃO CADASTRADO
-        // ==========================================
-
-        if (this.value === "manual") {
-
-            descricao.value = "";
-            valor.value = "";
-
-            avisoValor.style.display = "none";
-            avisoManual.style.display = "block";
-
-            ajudaDescricao.textContent =
-                "Digite o serviço que será realizado.";
-
-            descricao.focus();
-
-            return;
-        }
-
-
-        // ==========================================
-        // SERVIÇO EXISTENTE NO CATÁLOGO
-        // ==========================================
-
-        avisoManual.style.display = "none";
-
-
-        const descricaoServico =
-            opcao.dataset.descricao || "";
-
-        const complemento =
-            opcao.dataset.complemento || "";
-
-        const valorBase =
-            opcao.dataset.valor || "0";
-
-
-        // DESCRIÇÃO
-
-        if (complemento) {
-
-            descricao.value =
-                descricaoServico +
-                "\n" +
-                complemento;
-
-        } else {
-
-            descricao.value =
-                descricaoServico;
-
-        }
-
-
-        // VALOR
-
-        const numeroValor =
-            parseFloat(valorBase);
-
-
-        if (!isNaN(numeroValor)) {
-
-            valor.value =
-                numeroValor.toFixed(2);
-
-
-            valorReferencia.textContent =
-                numeroValor.toLocaleString(
-                    "pt-BR",
-                    {
-                        style: "currency",
-                        currency: "BRL"
-                    }
-                );
-
-
-            avisoValor.style.display =
-                "block";
-
-        }
-
-
-        ajudaDescricao.textContent =
-            "Descrição preenchida pelo catálogo. Você pode alterá-la.";
-
+            valor.value = Number(opcao.dataset.valor || 0).toFixed(2);
+            atualizarTotalGeral();
+        });
     }
-);
 
+    item.querySelectorAll(".item-quantidade, .item-valor").forEach(campo => {
+        campo.addEventListener("input", atualizarTotalGeral);
+    });
+}
+
+function adicionarItem() {
+    const container = document.getElementById("itens-orcamento");
+    const primeiro = container.querySelector(".item-orcamento");
+    const novo = primeiro.cloneNode(true);
+
+    novo.querySelector(".item-catalogo").value = "";
+    novo.querySelector("[name='item_descricao']").value = "";
+    novo.querySelector("[name='item_quantidade']").value = "1";
+    novo.querySelector("[name='item_valor']").value = "";
+    novo.querySelector(".item-total").value = "R$ 0,00";
+
+    container.appendChild(novo);
+    configurarItem(novo);
+    atualizarTotalGeral();
+}
+
+function removerItem(botao) {
+    const itens = document.querySelectorAll(".item-orcamento");
+    if (itens.length <= 1) {
+        alert("O orçamento precisa ter pelo menos um serviço.");
+        return;
+    }
+    botao.closest(".item-orcamento").remove();
+    atualizarTotalGeral();
+}
+
+document.querySelectorAll(".item-orcamento").forEach(configurarItem);
+atualizarTotalGeral();
 </script>
 
 {% endblock %}
