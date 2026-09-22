@@ -36,3 +36,12 @@ Thumbs.db
 # Planilhas usadas para importação de dados
 *.xlsx
 backup_render.dump
+
+# Backups do código
+*_backup.py
+
+# Arquivos de comparação
+comparacao*.txt
+
+# Outros backups de banco
+*.dump
