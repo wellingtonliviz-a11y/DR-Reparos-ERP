@@ -7,21 +7,21 @@ Orçamentos | DR Reparos ERP
 {% block content %}
 
 <div style="margin-bottom: 15px;">
-    <button type="button"
-            class="btn-voltar"
-            onclick="history.back()">
+    <button
+        type="button"
+        class="btn-voltar"
+        onclick="history.back()"
+    >
         ← Voltar
     </button>
 </div>
+
 
 <header class="topo">
 
     <div>
         <h1>Orçamentos</h1>
-
-        <p>
-            Controle das propostas enviadas aos clientes
-        </p>
+        <p>Controle das propostas enviadas aos clientes</p>
     </div>
 
     <a
@@ -41,17 +41,15 @@ Orçamentos | DR Reparos ERP
         <table class="tabela-erp">
 
             <thead>
-
                 <tr>
                     <th>Nº</th>
                     <th>Cliente</th>
-                    <th>Serviço</th>
+                    <th>Itens</th>
                     <th>Valor</th>
                     <th>Data</th>
                     <th>Status</th>
                     <th>Ações</th>
                 </tr>
-
             </thead>
 
 
@@ -75,13 +73,13 @@ Orçamentos | DR Reparos ERP
                     </td>
 
 
-                    <!-- SERVIÇO -->
+                    <!-- ITENS DO ORÇAMENTO -->
                     <td>
                         {{ orcamento.descricao|replace("\n", "<br>")|safe }}
                     </td>
 
 
-                    <!-- VALOR -->
+                    <!-- VALOR TOTAL -->
                     <td>
                         <strong>
                             R$ {{ "%.2f"|format(orcamento.valor)|replace(".", ",") }}
@@ -104,13 +102,11 @@ Orçamentos | DR Reparos ERP
                                 ✓ Aprovado
                             </span>
 
-
                         {% elif orcamento.status == "Não aprovado" %}
 
                             <span class="status-orcamento status-recusado">
                                 ✕ Não aprovado
                             </span>
-
 
                         {% else %}
 
@@ -131,21 +127,26 @@ Orçamentos | DR Reparos ERP
                             {% if orcamento.status != "Aprovado"
                                   and orcamento.status != "Não aprovado" %}
 
+                                <!-- EDITAR -->
                                 <a
-                                    href="{{ url_for('editar_orcamento', id=orcamento.id) }}"
+                                    href="{{ url_for(
+                                        'editar_orcamento',
+                                        id=orcamento.id
+                                    ) }}"
                                     class="btn-detalhes"
                                 >
                                     ✏️ Editar
                                 </a>
 
-                                <!-- APROVAR -->
 
+                                <!-- APROVAR -->
                                 <form
                                     method="POST"
                                     action="{{ url_for(
                                         'aprovar_orcamento',
                                         id=orcamento.id
                                     ) }}"
+                                    style="display: inline;"
                                 >
 
                                     <button
@@ -158,14 +159,11 @@ Orçamentos | DR Reparos ERP
                                 </form>
 
 
-                                <!-- NÃO APROVAR -->
-
+                                <!-- NÃO APROVADO -->
                                 <button
                                     type="button"
                                     class="btn-recusar"
-                                    onclick="abrirRecusa(
-                                        '{{ orcamento.id }}'
-                                    )"
+                                    onclick="abrirRecusa('{{ orcamento.id }}')"
                                 >
                                     ✕ Não aprovado
                                 </button>
@@ -173,25 +171,9 @@ Orçamentos | DR Reparos ERP
 
                             {% elif orcamento.status == "Aprovado" %}
 
-                                {% if orcamento.servico %}
-
-                                    <a
-                                        href="{{ url_for(
-                                            'detalhes_servico',
-                                            id=orcamento.servico.id
-                                        ) }}"
-                                        class="btn-detalhes"
-                                    >
-                                        Ver OS #{{ "%04d"|format(orcamento.servico.numero_os or orcamento.servico.id) }}
-                                    </a>
-
-                                {% else %}
-
-                                    <span>
-                                        OS não encontrada
-                                    </span>
-
-                                {% endif %}
+                                <span class="orcamento-encerrado">
+                                    ✓ Faturado
+                                </span>
 
 
                             {% else %}
@@ -204,22 +186,31 @@ Orçamentos | DR Reparos ERP
 
                         </div>
 
-                        <a
-                            href="{{ url_for('gerar_orcamento_pdf', id=orcamento.id) }}"
-                            class="btn-detalhes"
-                            target="_blank"
-                        >
-                            📄 Gerar PDF
-                        </a>
 
-                        <!-- MOTIVO DA RECUSA -->
+                        <!-- GERAR PDF -->
+                        <div style="margin-top: 8px;">
 
+                            <a
+                                href="{{ url_for(
+                                    'gerar_orcamento_pdf',
+                                    id=orcamento.id
+                                ) }}"
+                                class="btn-detalhes"
+                                target="_blank"
+                            >
+                                📄 Gerar PDF
+                            </a>
+
+                        </div>
+
+
+                        <!-- MOTIVO DA NÃO APROVAÇÃO -->
                         {% if orcamento.status == "Não aprovado"
                               and orcamento.motivo_perda %}
 
                             <div class="motivo-perda">
 
-                                Motivo:
+                                <strong>Motivo:</strong>
                                 {{ orcamento.motivo_perda }}
 
                             </div>
@@ -227,59 +218,56 @@ Orçamentos | DR Reparos ERP
                         {% endif %}
 
 
-                        <!-- FORMULÁRIO OCULTO -->
-
+                        <!-- FORMULÁRIO DE NÃO APROVAÇÃO -->
                         {% if orcamento.status != "Aprovado"
                               and orcamento.status != "Não aprovado" %}
 
-                        <div
-                            id="recusa-{{ orcamento.id }}"
-                            class="caixa-recusa"
-                            style="display: none;"
-                        >
-
-                            <form
-                                method="POST"
-                                action="{{ url_for(
-                                    'recusar_orcamento',
-                                    id=orcamento.id
-                                ) }}"
+                            <div
+                                id="recusa-{{ orcamento.id }}"
+                                class="caixa-recusa"
+                                style="display: none;"
                             >
 
-                                <label>
-                                    Motivo da não aprovação
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="motivo_perda"
-                                    placeholder="Ex.: Cliente achou o valor alto"
+                                <form
+                                    method="POST"
+                                    action="{{ url_for(
+                                        'recusar_orcamento',
+                                        id=orcamento.id
+                                    ) }}"
                                 >
 
-                                <div class="acoes-recusa">
+                                    <label>
+                                        Motivo da não aprovação
+                                    </label>
 
-                                    <button
-                                        type="submit"
-                                        class="btn-confirmar-recusa"
+                                    <input
+                                        type="text"
+                                        name="motivo_perda"
+                                        placeholder="Ex.: Cliente achou o valor alto"
                                     >
-                                        Confirmar
-                                    </button>
 
-                                    <button
-                                        type="button"
-                                        class="btn-cancelar-recusa"
-                                        onclick="fecharRecusa(
-                                            '{{ orcamento.id }}'
-                                        )"
-                                    >
-                                        Cancelar
-                                    </button>
+                                    <div class="acoes-recusa">
 
-                                </div>
+                                        <button
+                                            type="submit"
+                                            class="btn-confirmar-recusa"
+                                        >
+                                            Confirmar
+                                        </button>
 
-                            </form>
+                                        <button
+                                            type="button"
+                                            class="btn-cancelar-recusa"
+                                            onclick="fecharRecusa('{{ orcamento.id }}')"
+                                        >
+                                            Cancelar
+                                        </button>
 
-                        </div>
+                                    </div>
+
+                                </form>
+
+                            </div>
 
                         {% endif %}
 
@@ -291,11 +279,9 @@ Orçamentos | DR Reparos ERP
                 {% else %}
 
                 <tr>
-
                     <td colspan="7">
                         Nenhum orçamento cadastrado.
                     </td>
-
                 </tr>
 
                 {% endfor %}
@@ -313,18 +299,22 @@ Orçamentos | DR Reparos ERP
 
 function abrirRecusa(id) {
 
-    document.getElementById(
-        "recusa-" + id
-    ).style.display = "block";
+    const caixa = document.getElementById("recusa-" + id);
+
+    if (caixa) {
+        caixa.style.display = "block";
+    }
 
 }
 
 
 function fecharRecusa(id) {
 
-    document.getElementById(
-        "recusa-" + id
-    ).style.display = "none";
+    const caixa = document.getElementById("recusa-" + id);
+
+    if (caixa) {
+        caixa.style.display = "none";
+    }
 
 }
 

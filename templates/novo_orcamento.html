@@ -15,240 +15,1456 @@
     <div class="form-card">
 
         <div class="cabecalho-formulario">
-            <h1>{% if orcamento %}Editar Orçamento #{{ "%04d"|format(orcamento.id) }}{% else %}Novo Orçamento{% endif %}</h1>
-            <p>Monte a proposta com um ou mais serviços, quantidades e valores.</p>
+            <h1>
+                {% if orcamento %}
+                    Editar Orçamento #{{ "%04d"|format(orcamento.id) }}
+                {% else %}
+                    Novo Orçamento
+                {% endif %}
+            </h1>
+
+            <p>
+                Informe a mão de obra e os materiais utilizados no serviço.
+            </p>
         </div>
+
 
         <form method="POST" id="form-orcamento">
 
+            <!-- ============================== -->
+            <!-- CLIENTE -->
+            <!-- ============================== -->
+
             <div class="form-grupo">
-                <label for="cliente_id">Cliente *</label>
-                <select id="cliente_id" name="cliente_id" required>
-                    <option value="">Selecione o cliente</option>
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:15px;
+                    margin-bottom:8px;
+                    flex-wrap:wrap;
+                ">
+
+                    <label for="cliente_id" style="margin:0;">
+                        Cliente *
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="abrirNovoCliente()"
+                        style="padding:8px 14px;"
+                    >
+                        + Novo cliente
+                    </button>
+
+                </div>
+
+
+                <select
+                    id="cliente_id"
+                    name="cliente_id"
+                    required
+                >
+
+                    <option value="">
+                        Selecione o cliente
+                    </option>
+
                     {% for cliente in clientes %}
-                    <option value="{{ cliente.id }}"
-                        {% if orcamento and orcamento.cliente_id == cliente.id %}selected{% endif %}>
+
+                    <option
+                        value="{{ cliente.id }}"
+                        {% if orcamento and orcamento.cliente_id == cliente.id %}
+                            selected
+                        {% endif %}
+                    >
                         {{ cliente.nome }}
                     </option>
+
                     {% endfor %}
+
                 </select>
+
             </div>
 
+
+            <!-- ============================== -->
+            <!-- MÃO DE OBRA / SERVIÇOS -->
+            <!-- ============================== -->
+
             <div class="form-grupo">
-                <label>Serviços do orçamento *</label>
-                <div id="itens-orcamento">
-                    {% if itens_edicao %}
-                        {% for item in itens_edicao %}
-                        <div class="item-orcamento">
-                            <div class="form-grupo">
-                                <label>Serviço</label>
-                                <select class="item-catalogo">
-                                    <option value="">Selecionar do catálogo</option>
-                                    <option value="manual">➕ Digitar manualmente</option>
-                                    {% for servico in catalogo %}
-                                    <option value="{{ servico.id }}"
-                                            data-descricao="{{ servico.descricao }}"
-                                            data-complemento="{{ servico.complemento or '' }}"
-                                            data-valor="{{ servico.valor_base }}">
-                                        {{ servico.descricao }} — R$ {{ "%.2f"|format(servico.valor_base) }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
 
-                            <div class="linha-formulario item-linha">
-                                <div class="form-grupo" style="flex: 2;">
-                                    <label>Descrição *</label>
-                                    <input type="text" name="item_descricao" value="{{ item.descricao }}" required>
-                                </div>
+                <h2 style="margin-top:25px;">
+                    🔧 Mão de obra / Serviços
+                </h2>
 
-                                <div class="form-grupo">
-                                    <label>Quantidade</label>
-                                    <input type="number" name="item_quantidade" class="item-quantidade" min="1" step="1" value="{{ item.quantidade|int }}" required>
-                                </div>
+                <div id="servicos-orcamento">
 
-                                <div class="form-grupo">
-                                    <label>Valor unitário</label>
-                                    <input type="number" name="item_valor" class="item-valor" min="0" step="0.01" value="{{ item.valor_unitario }}" required>
-                                </div>
+                    {% set servicos_edicao =
+                        itens_edicao
+                        | selectattr("tipo", "ne", "Material")
+                        | list
+                        if itens_edicao
+                        else [None]
+                    %}
 
-                                <div class="form-grupo">
-                                    <label>Total</label>
-                                    <input type="text" class="item-total" value="R$ 0,00" readonly>
-                                </div>
-
-                                <button type="button" class="btn-remover-item" onclick="removerItem(this)">×</button>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="item-orcamento">
-                            <div class="form-grupo">
-                                <label>Serviço</label>
-                                <select class="item-catalogo">
-                                    <option value="">Selecionar do catálogo</option>
-                                    <option value="manual">➕ Digitar manualmente</option>
-                                    {% for servico in catalogo %}
-                                    <option value="{{ servico.id }}"
-                                            data-descricao="{{ servico.descricao }}"
-                                            data-complemento="{{ servico.complemento or '' }}"
-                                            data-valor="{{ servico.valor_base }}">
-                                        {{ servico.descricao }} — R$ {{ "%.2f"|format(servico.valor_base) }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="linha-formulario item-linha">
-                                <div class="form-grupo" style="flex: 2;">
-                                    <label>Descrição *</label>
-                                    <input type="text" name="item_descricao" placeholder="Ex.: Instalação de torneira" required>
-                                </div>
-
-                                <div class="form-grupo">
-                                    <label>Quantidade</label>
-                                    <input type="number" name="item_quantidade" class="item-quantidade" min="1" step="1" value="1" required>
-                                </div>
-
-                                <div class="form-grupo">
-                                    <label>Valor unitário</label>
-                                    <input type="number" name="item_valor" class="item-valor" min="0" step="0.01" placeholder="0,00" required>
-                                </div>
-
-                                <div class="form-grupo">
-                                    <label>Total</label>
-                                    <input type="text" class="item-total" value="R$ 0,00" readonly>
-                                </div>
-
-                                <button type="button" class="btn-remover-item" onclick="removerItem(this)">×</button>
-                            </div>
-                        </div>
+                    {% if not servicos_edicao %}
+                        {% set servicos_edicao = [None] %}
                     {% endif %}
+
+
+                    {% for item in servicos_edicao %}
+
+                    <div class="item-orcamento item-servico">
+
+                        <input
+                            type="hidden"
+                            name="item_tipo"
+                            value="Serviço"
+                        >
+
+
+                        <div class="form-grupo">
+
+                            <label>
+                                Catálogo de serviços
+                            </label>
+
+                            <select class="item-catalogo">
+
+                                <option value="">
+                                    Selecionar ou digitar manualmente
+                                </option>
+
+                                {% for servico in catalogo %}
+
+                                <option
+                                    data-descricao="{{ servico.descricao }}"
+                                    data-complemento="{{ servico.complemento or '' }}"
+                                    data-valor="{{ servico.valor_base }}"
+                                >
+                                    {{ servico.descricao }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="linha-formulario item-linha">
+
+                            <div class="form-grupo" style="flex:2;">
+
+                                <label>
+                                    Descrição *
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="item_descricao"
+                                    value="{{ item.descricao if item else '' }}"
+                                    placeholder="Ex.: Instalação de torneira"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-grupo">
+
+                                <label>
+                                    Quantidade
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="item_quantidade"
+                                    class="item-quantidade"
+                                    min="1"
+                                    step="1"
+                                    value="{{ item.quantidade|int if item else 1 }}"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-grupo">
+
+                                <label>
+                                    Valor unitário
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="item_valor"
+                                    class="item-valor"
+                                    min="0"
+                                    step="0.01"
+                                    value="{{ item.valor_unitario if item else '' }}"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-grupo">
+
+                                <label>
+                                    Total
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="item-total"
+                                    value="R$ 0,00"
+                                    readonly
+                                >
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                class="btn-remover-item"
+                                onclick="removerItem(this)"
+                            >
+                                ×
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
                 </div>
 
-                <button type="button" class="btn-secundario" onclick="adicionarItem()">
-                    + Adicionar outro serviço
+
+                <button
+                    type="button"
+                    class="btn-secundario"
+                    onclick="adicionarServico()"
+                >
+                    + Adicionar serviço
                 </button>
 
-                <div class="aviso-valor" style="display:block; margin-top:15px;">
-                    <strong>Total do orçamento:</strong>
-                    <span id="total-geral">R$ 0,00</span>
-                </div>
             </div>
 
-            <div class="linha-formulario">
-                <div class="form-grupo">
-                    <label for="validade_dias">Validade</label>
-                    <input type="number" id="validade_dias" name="validade_dias" min="1" value="{{ orcamento.validade_dias if orcamento else 15 }}">
-                    <small>Dias</small>
-                </div>
+
+            <!-- TOTAL MÃO DE OBRA -->
+
+            <div
+                class="aviso-valor"
+                style="display:block; margin-top:15px;"
+            >
+                <strong>Mão de obra:</strong>
+
+                <span id="total-servicos">
+                    R$ 0,00
+                </span>
             </div>
+
+
+            <!-- ============================== -->
+            <!-- MATERIAIS -->
+            <!-- ============================== -->
 
             <div class="form-grupo">
-                <label for="observacoes">Observações</label>
-                <textarea id="observacoes" name="observacoes" rows="4" placeholder="Informações adicionais...">{{ orcamento.observacoes if orcamento else '' }}</textarea>
+
+                <h2 style="margin-top:35px;">
+                    📦 Peças / Materiais
+                </h2>
+
+                <p style="margin-bottom:15px;">
+                    Informe as peças ou materiais usados ou previstos para o serviço.
+                </p>
+
+
+                <div id="materiais-orcamento">
+
+                    {% if itens_edicao %}
+
+                        {% for item in itens_edicao %}
+
+                            {% if item.tipo|default("Serviço") == "Material" %}
+
+                            <div class="item-orcamento item-material-bloco">
+
+                                <input
+                                    type="hidden"
+                                    name="item_tipo"
+                                    value="Material"
+                                >
+
+
+                                <div class="form-grupo">
+
+                                    <label>
+                                        Material / Estoque
+                                    </label>
+
+                                    <select class="item-material-select">
+
+                                        <option value="">
+                                            Selecionar ou digitar manualmente
+                                        </option>
+
+                                        {% for material in materiais %}
+
+                                        <option
+                                            data-descricao="{{ material.descricao }}"
+                                            data-valor="{{ material.valor_venda or 0 }}"
+                                        >
+                                            {{ material.descricao }}
+                                        </option>
+
+                                        {% endfor %}
+
+                                    </select>
+
+                                </div>
+
+
+                                <div class="linha-formulario item-linha">
+
+                                    <div class="form-grupo" style="flex:2;">
+
+                                        <label>
+                                            Material *
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            name="item_descricao"
+                                            value="{{ item.descricao }}"
+                                            placeholder="Ex.: Torneira com filtro"
+                                            required
+                                        >
+
+                                    </div>
+
+
+                                    <div class="form-grupo">
+
+                                        <label>
+                                            Quantidade
+                                        </label>
+
+                                        <input
+                                            type="number"
+                                            name="item_quantidade"
+                                            class="item-quantidade"
+                                            min="1"
+                                            step="1"
+                                            value="{{ item.quantidade|int }}"
+                                            required
+                                        >
+
+                                    </div>
+
+
+                                    <div class="form-grupo">
+
+                                        <label>
+                                            Valor unitário
+                                        </label>
+
+                                        <input
+                                            type="number"
+                                            name="item_valor"
+                                            class="item-valor"
+                                            min="0"
+                                            step="0.01"
+                                            value="{{ item.valor_unitario }}"
+                                            required
+                                        >
+
+                                    </div>
+
+
+                                    <div class="form-grupo">
+
+                                        <label>
+                                            Total
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            class="item-total"
+                                            value="R$ 0,00"
+                                            readonly
+                                        >
+
+                                    </div>
+
+
+                                    <button
+                                        type="button"
+                                        class="btn-remover-item"
+                                        onclick="removerItem(this)"
+                                    >
+                                        ×
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+                    {% endif %}
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="btn-secundario"
+                    onclick="adicionarMaterial()"
+                >
+                    + Adicionar material
+                </button>
+
             </div>
+
+
+            <!-- TOTAL MATERIAIS -->
+
+            <div
+                class="aviso-valor"
+                style="display:block; margin-top:15px;"
+            >
+                <strong>Materiais:</strong>
+
+                <span id="total-materiais">
+                    R$ 0,00
+                </span>
+            </div>
+
+
+            <!-- TOTAL GERAL -->
+
+            <div
+                class="aviso-valor"
+                style="
+                    display:block;
+                    margin-top:20px;
+                    font-size:20px;
+                "
+            >
+
+                <strong>Total do orçamento:</strong>
+
+                <span id="total-geral">
+                    R$ 0,00
+                </span>
+
+            </div>
+
+
+            <!-- VALIDADE -->
+
+            <div
+                class="linha-formulario"
+                style="margin-top:25px;"
+            >
+
+                <div class="form-grupo">
+
+                    <label for="validade_dias">
+                        Validade
+                    </label>
+
+                    <input
+                        type="number"
+                        id="validade_dias"
+                        name="validade_dias"
+                        min="1"
+                        value="{{ orcamento.validade_dias if orcamento else 15 }}"
+                    >
+
+                    <small>Dias</small>
+
+                </div>
+
+            </div>
+
+
+            <!-- OBSERVAÇÕES -->
+
+            <div class="form-grupo">
+
+                <label for="observacoes">
+                    Observações
+                </label>
+
+                <textarea
+                    id="observacoes"
+                    name="observacoes"
+                    rows="4"
+                    placeholder="Informações adicionais..."
+                >{{ orcamento.observacoes if orcamento else '' }}</textarea>
+
+            </div>
+
+
+            <!-- BOTÕES -->
 
             <div class="acoes-form">
-                <button type="submit" class="btn-principal">
-                    {% if orcamento %}Salvar alterações{% else %}Salvar orçamento{% endif %}
+
+                <button
+                    type="submit"
+                    class="btn-principal"
+                >
+                    {% if orcamento %}
+                        Salvar alterações
+                    {% else %}
+                        Salvar orçamento
+                    {% endif %}
                 </button>
-                <a href="{{ url_for('orcamentos') }}" class="btn-secundario">Cancelar</a>
+
+
+                <a
+                    href="{{ url_for('orcamentos') }}"
+                    class="btn-secundario"
+                >
+                    Cancelar
+                </a>
+
             </div>
 
         </form>
+
     </div>
+
 </div>
 
+
+<!-- ========================================== -->
+<!-- MODAL NOVO CLIENTE -->
+<!-- ========================================== -->
+
+<div
+    id="modal-novo-cliente"
+    style="
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.65);
+        z-index:9999;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+    "
+>
+
+    <div
+        style="
+            background:white;
+            width:100%;
+            max-width:600px;
+            border-radius:14px;
+            padding:28px;
+            box-shadow:0 20px 60px rgba(0,0,0,0.30);
+            max-height:90vh;
+            overflow-y:auto;
+        "
+    >
+
+        <div
+            style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:15px;
+                margin-bottom:22px;
+            "
+        >
+
+            <div>
+                <h2 style="margin:0;">
+                    👤 Novo cliente
+                </h2>
+
+                <p style="margin:5px 0 0 0; color:#666;">
+                    Cadastre o cliente sem sair do orçamento.
+                </p>
+            </div>
+
+
+            <button
+                type="button"
+                onclick="fecharNovoCliente()"
+                style="
+                    border:none;
+                    background:none;
+                    font-size:30px;
+                    cursor:pointer;
+                    color:#555;
+                "
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label for="novo-cliente-nome">
+                Nome *
+            </label>
+
+            <input
+                type="text"
+                id="novo-cliente-nome"
+                placeholder="Nome do cliente"
+            >
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label for="novo-cliente-telefone">
+                Telefone *
+            </label>
+
+            <input
+                type="text"
+                id="novo-cliente-telefone"
+                placeholder="(12) 99999-9999"
+            >
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label for="novo-cliente-email">
+                E-mail
+            </label>
+
+            <input
+                type="email"
+                id="novo-cliente-email"
+                placeholder="cliente@email.com"
+            >
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label for="novo-cliente-endereco">
+                Endereço
+            </label>
+
+            <input
+                type="text"
+                id="novo-cliente-endereco"
+                placeholder="Rua, número, bairro..."
+            >
+
+        </div>
+
+
+        <div class="form-grupo">
+
+            <label for="novo-cliente-observacoes">
+                Observações
+            </label>
+
+            <textarea
+                id="novo-cliente-observacoes"
+                rows="3"
+                placeholder="Informações adicionais..."
+            ></textarea>
+
+        </div>
+
+
+        <div
+            id="erro-novo-cliente"
+            style="
+                display:none;
+                margin-bottom:15px;
+                padding:10px;
+                background:#ffe5e5;
+                color:#a00000;
+                border-radius:8px;
+            "
+        ></div>
+
+
+        <div
+            style="
+                display:flex;
+                justify-content:flex-end;
+                gap:10px;
+                margin-top:20px;
+            "
+        >
+
+            <button
+                type="button"
+                class="btn-secundario"
+                onclick="fecharNovoCliente()"
+            >
+                Cancelar
+            </button>
+
+
+            <button
+                type="button"
+                class="btn-principal"
+                id="btn-salvar-novo-cliente"
+                onclick="salvarNovoCliente()"
+            >
+                Salvar cliente
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
 <script>
+
+/* ========================================== */
+/* CLIENTE RÁPIDO */
+/* ========================================== */
+
+function abrirNovoCliente() {
+
+    const modal =
+        document.getElementById('modal-novo-cliente');
+
+    modal.style.display = 'flex';
+
+    document.getElementById(
+        'novo-cliente-nome'
+    ).focus();
+
+}
+
+
+function fecharNovoCliente() {
+
+    document.getElementById(
+        'modal-novo-cliente'
+    ).style.display = 'none';
+
+    document.getElementById(
+        'erro-novo-cliente'
+    ).style.display = 'none';
+
+}
+
+
+async function salvarNovoCliente() {
+
+    const nome =
+        document.getElementById(
+            'novo-cliente-nome'
+        ).value.trim();
+
+    const telefone =
+        document.getElementById(
+            'novo-cliente-telefone'
+        ).value.trim();
+
+    const email =
+        document.getElementById(
+            'novo-cliente-email'
+        ).value.trim();
+
+    const endereco =
+        document.getElementById(
+            'novo-cliente-endereco'
+        ).value.trim();
+
+    const observacoes =
+        document.getElementById(
+            'novo-cliente-observacoes'
+        ).value.trim();
+
+
+    const erro =
+        document.getElementById(
+            'erro-novo-cliente'
+        );
+
+    const botao =
+        document.getElementById(
+            'btn-salvar-novo-cliente'
+        );
+
+
+    erro.style.display = 'none';
+
+
+    if (!nome || !telefone) {
+
+        erro.textContent =
+            'Preencha o nome e o telefone do cliente.';
+
+        erro.style.display = 'block';
+
+        return;
+
+    }
+
+
+    const dados =
+        new URLSearchParams();
+
+    dados.append('nome', nome);
+    dados.append('telefone', telefone);
+    dados.append('email', email);
+    dados.append('endereco', endereco);
+    dados.append('observacoes', observacoes);
+
+
+    try {
+
+        botao.disabled = true;
+        botao.textContent = 'Salvando...';
+
+
+        const resposta = await fetch(
+            "{{ url_for('novo_cliente_rapido') }}",
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type':
+                        'application/x-www-form-urlencoded'
+                },
+                body: dados.toString()
+            }
+        );
+
+
+        const resultado =
+            await resposta.json();
+
+
+        if (!resposta.ok || !resultado.sucesso) {
+
+            throw new Error(
+                resultado.erro ||
+                'Não foi possível cadastrar o cliente.'
+            );
+
+        }
+
+
+        const selectCliente =
+            document.getElementById(
+                'cliente_id'
+            );
+
+
+        const novaOpcao =
+            document.createElement('option');
+
+        novaOpcao.value =
+            resultado.cliente.id;
+
+        novaOpcao.textContent =
+            resultado.cliente.nome;
+
+        novaOpcao.selected = true;
+
+
+        selectCliente.appendChild(
+            novaOpcao
+        );
+
+
+        document.getElementById(
+            'novo-cliente-nome'
+        ).value = '';
+
+        document.getElementById(
+            'novo-cliente-telefone'
+        ).value = '';
+
+        document.getElementById(
+            'novo-cliente-email'
+        ).value = '';
+
+        document.getElementById(
+            'novo-cliente-endereco'
+        ).value = '';
+
+        document.getElementById(
+            'novo-cliente-observacoes'
+        ).value = '';
+
+
+        fecharNovoCliente();
+
+    }
+    catch (e) {
+
+        erro.textContent = e.message;
+        erro.style.display = 'block';
+
+    }
+    finally {
+
+        botao.disabled = false;
+        botao.textContent = 'Salvar cliente';
+
+    }
+
+}
+
+
+/* ========================================== */
+/* FORMATAÇÃO DE DINHEIRO */
+/* ========================================== */
+
 function dinheiro(valor) {
-    return Number(valor || 0).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    });
+
+    return Number(valor || 0).toLocaleString(
+        'pt-BR',
+        {
+            style: 'currency',
+            currency: 'BRL'
+        }
+    );
+
 }
 
-function atualizarItem(item) {
-    const qtd = parseFloat(item.querySelector(".item-quantidade")?.value || 0);
-    const valor = parseFloat(item.querySelector(".item-valor")?.value || 0);
-    const total = qtd * valor;
-    const campoTotal = item.querySelector(".item-total");
-    if (campoTotal) campoTotal.value = dinheiro(total);
+
+/* ========================================== */
+/* TOTAIS */
+/* ========================================== */
+
+function atualizarTotais() {
+
+    let totalServicos = 0;
+    let totalMateriais = 0;
+
+
+    document
+        .querySelectorAll('.item-servico')
+        .forEach(function(item) {
+
+            const quantidade = parseFloat(
+                item.querySelector('.item-quantidade').value || 0
+            );
+
+            const valor = parseFloat(
+                item.querySelector('.item-valor').value || 0
+            );
+
+            const total =
+                quantidade * valor;
+
+            item.querySelector(
+                '.item-total'
+            ).value = dinheiro(total);
+
+            totalServicos += total;
+
+        });
+
+
+    document
+        .querySelectorAll('.item-material-bloco')
+        .forEach(function(item) {
+
+            const quantidade = parseFloat(
+                item.querySelector('.item-quantidade').value || 0
+            );
+
+            const valor = parseFloat(
+                item.querySelector('.item-valor').value || 0
+            );
+
+            const total =
+                quantidade * valor;
+
+            item.querySelector(
+                '.item-total'
+            ).value = dinheiro(total);
+
+            totalMateriais += total;
+
+        });
+
+
+    document.getElementById(
+        'total-servicos'
+    ).textContent =
+        dinheiro(totalServicos);
+
+
+    document.getElementById(
+        'total-materiais'
+    ).textContent =
+        dinheiro(totalMateriais);
+
+
+    document.getElementById(
+        'total-geral'
+    ).textContent =
+        dinheiro(
+            totalServicos +
+            totalMateriais
+        );
+
 }
 
-function atualizarTotalGeral() {
-    let total = 0;
-    document.querySelectorAll(".item-orcamento").forEach(item => {
-        const qtd = parseFloat(item.querySelector(".item-quantidade")?.value || 0);
-        const valor = parseFloat(item.querySelector(".item-valor")?.value || 0);
-        total += qtd * valor;
-        atualizarItem(item);
-    });
-    document.getElementById("total-geral").textContent = dinheiro(total);
-}
 
-function configurarItem(item) {
-    const seletor = item.querySelector(".item-catalogo");
-    if (seletor) {
-        seletor.addEventListener("change", function () {
-            const opcao = this.options[this.selectedIndex];
-            const descricao = item.querySelector("[name='item_descricao']");
-            const valor = item.querySelector("[name='item_valor']");
+/* ========================================== */
+/* SERVIÇOS */
+/* ========================================== */
 
-            if (!this.value) return;
+function configurarServico(item) {
 
-            if (this.value === "manual") {
-                descricao.value = "";
-                valor.value = "";
-                descricao.focus();
-                atualizarTotalGeral();
+    const catalogo =
+        item.querySelector(
+            '.item-catalogo'
+        );
+
+
+    catalogo.addEventListener(
+        'change',
+        function() {
+
+            const opcao =
+                this.options[
+                    this.selectedIndex
+                ];
+
+
+            if (!this.value) {
                 return;
             }
 
-            const descricaoBase = opcao.dataset.descricao || "";
-            const complemento = opcao.dataset.complemento || "";
-            descricao.value = complemento
-                ? descricaoBase + " - " + complemento
-                : descricaoBase;
 
-            valor.value = Number(opcao.dataset.valor || 0).toFixed(2);
-            atualizarTotalGeral();
+            const descricao =
+                item.querySelector(
+                    "[name='item_descricao']"
+                );
+
+            const valor =
+                item.querySelector(
+                    "[name='item_valor']"
+                );
+
+
+            const base =
+                opcao.dataset.descricao || '';
+
+            const complemento =
+                opcao.dataset.complemento || '';
+
+
+            descricao.value =
+                complemento
+                    ? base + ' - ' + complemento
+                    : base;
+
+
+            valor.value =
+                Number(
+                    opcao.dataset.valor || 0
+                ).toFixed(2);
+
+
+            atualizarTotais();
+
+        }
+    );
+
+
+    item
+        .querySelectorAll(
+            '.item-quantidade, .item-valor'
+        )
+        .forEach(function(campo) {
+
+            campo.addEventListener(
+                'input',
+                atualizarTotais
+            );
+
         });
-    }
 
-    item.querySelectorAll(".item-quantidade, .item-valor").forEach(campo => {
-        campo.addEventListener("input", atualizarTotalGeral);
-    });
 }
 
-function adicionarItem() {
-    const container = document.getElementById("itens-orcamento");
-    const primeiro = container.querySelector(".item-orcamento");
-    const novo = primeiro.cloneNode(true);
 
-    novo.querySelector(".item-catalogo").value = "";
-    novo.querySelector("[name='item_descricao']").value = "";
-    novo.querySelector("[name='item_quantidade']").value = "1";
-    novo.querySelector("[name='item_valor']").value = "";
-    novo.querySelector(".item-total").value = "R$ 0,00";
+/* ========================================== */
+/* MATERIAIS */
+/* ========================================== */
+
+function configurarMaterial(item) {
+
+    const seletor =
+        item.querySelector(
+            '.item-material-select'
+        );
+
+
+    seletor.addEventListener(
+        'change',
+        function() {
+
+            const opcao =
+                this.options[
+                    this.selectedIndex
+                ];
+
+
+            if (!this.value) {
+                return;
+            }
+
+
+            item.querySelector(
+                "[name='item_descricao']"
+            ).value =
+                opcao.dataset.descricao || '';
+
+
+            item.querySelector(
+                "[name='item_valor']"
+            ).value =
+                Number(
+                    opcao.dataset.valor || 0
+                ).toFixed(2);
+
+
+            atualizarTotais();
+
+        }
+    );
+
+
+    item
+        .querySelectorAll(
+            '.item-quantidade, .item-valor'
+        )
+        .forEach(function(campo) {
+
+            campo.addEventListener(
+                'input',
+                atualizarTotais
+            );
+
+        });
+
+}
+
+
+/* ========================================== */
+/* ADICIONAR SERVIÇO */
+/* ========================================== */
+
+function adicionarServico() {
+
+    const container =
+        document.getElementById(
+            'servicos-orcamento'
+        );
+
+
+    const original =
+        container.querySelector(
+            '.item-servico'
+        );
+
+
+    const novo =
+        original.cloneNode(true);
+
+
+    novo.querySelector(
+        '.item-catalogo'
+    ).value = '';
+
+
+    novo.querySelector(
+        "[name='item_descricao']"
+    ).value = '';
+
+
+    novo.querySelector(
+        "[name='item_quantidade']"
+    ).value = '1';
+
+
+    novo.querySelector(
+        "[name='item_valor']"
+    ).value = '';
+
+
+    novo.querySelector(
+        '.item-total'
+    ).value = 'R$ 0,00';
+
 
     container.appendChild(novo);
-    configurarItem(novo);
-    atualizarTotalGeral();
+
+    configurarServico(novo);
+
+    atualizarTotais();
+
 }
+
+
+/* ========================================== */
+/* ADICIONAR MATERIAL */
+/* ========================================== */
+
+function adicionarMaterial() {
+
+    const container =
+        document.getElementById(
+            'materiais-orcamento'
+        );
+
+
+    const bloco =
+        document.createElement('div');
+
+
+    bloco.className =
+        'item-orcamento item-material-bloco';
+
+
+    bloco.innerHTML = `
+
+        <input
+            type="hidden"
+            name="item_tipo"
+            value="Material"
+        >
+
+        <div class="form-grupo">
+
+            <label>
+                Material / Estoque
+            </label>
+
+            <select class="item-material-select">
+
+                <option value="">
+                    Selecionar ou digitar manualmente
+                </option>
+
+                {% for material in materiais %}
+
+                <option
+                    data-descricao="{{ material.descricao }}"
+                    data-valor="{{ material.valor_venda or 0 }}"
+                >
+                    {{ material.descricao }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="linha-formulario item-linha">
+
+            <div
+                class="form-grupo"
+                style="flex:2;"
+            >
+
+                <label>
+                    Material *
+                </label>
+
+                <input
+                    type="text"
+                    name="item_descricao"
+                    placeholder="Ex.: Torneira, reparo, flexível..."
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Quantidade
+                </label>
+
+                <input
+                    type="number"
+                    name="item_quantidade"
+                    class="item-quantidade"
+                    min="1"
+                    step="1"
+                    value="1"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Valor unitário
+                </label>
+
+                <input
+                    type="number"
+                    name="item_valor"
+                    class="item-valor"
+                    min="0"
+                    step="0.01"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-grupo">
+
+                <label>
+                    Total
+                </label>
+
+                <input
+                    type="text"
+                    class="item-total"
+                    value="R$ 0,00"
+                    readonly
+                >
+
+            </div>
+
+
+            <button
+                type="button"
+                class="btn-remover-item"
+                onclick="removerItem(this)"
+            >
+                ×
+            </button>
+
+        </div>
+
+    `;
+
+
+    container.appendChild(bloco);
+
+    configurarMaterial(bloco);
+
+    atualizarTotais();
+
+}
+
+
+/* ========================================== */
+/* REMOVER ITEM */
+/* ========================================== */
 
 function removerItem(botao) {
-    const itens = document.querySelectorAll(".item-orcamento");
-    if (itens.length <= 1) {
-        alert("O orçamento precisa ter pelo menos um serviço.");
-        return;
+
+    const item =
+        botao.closest(
+            '.item-orcamento'
+        );
+
+
+    if (
+        item.classList.contains(
+            'item-servico'
+        )
+    ) {
+
+        const servicos =
+            document.querySelectorAll(
+                '.item-servico'
+            );
+
+
+        if (servicos.length <= 1) {
+
+            alert(
+                'O orçamento precisa ter pelo menos um serviço.'
+            );
+
+            return;
+
+        }
+
     }
-    botao.closest(".item-orcamento").remove();
-    atualizarTotalGeral();
+
+
+    item.remove();
+
+    atualizarTotais();
+
 }
 
-document.querySelectorAll(".item-orcamento").forEach(configurarItem);
-atualizarTotalGeral();
+
+/* ========================================== */
+/* FECHAR MODAL CLICANDO FORA */
+/* ========================================== */
+
+document
+    .getElementById('modal-novo-cliente')
+    .addEventListener(
+        'click',
+        function(evento) {
+
+            if (evento.target === this) {
+                fecharNovoCliente();
+            }
+
+        }
+    );
+
+
+/* ========================================== */
+/* INICIALIZAÇÃO */
+/* ========================================== */
+
+document
+    .querySelectorAll(
+        '.item-servico'
+    )
+    .forEach(
+        configurarServico
+    );
+
+
+document
+    .querySelectorAll(
+        '.item-material-bloco'
+    )
+    .forEach(
+        configurarMaterial
+    );
+
+
+atualizarTotais();
+
 </script>
 
 {% endblock %}

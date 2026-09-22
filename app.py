@@ -5,7 +5,7 @@ from decimal import Decimal
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 from flask import send_file
 from io import BytesIO
@@ -36,6 +36,11 @@ if not DATABASE_URL:
 
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
 
 db = SQLAlchemy(app)
 
@@ -95,6 +100,8 @@ class Cliente(db.Model):
         default=datetime.utcnow,
         nullable=False
     )
+
+   
 
     orcamentos = db.relationship(
         "Orcamento",
@@ -165,6 +172,9 @@ class Orcamento(db.Model):
         nullable=False
     )
 
+    # Data em que o orçamento passou a contar como faturamento
+    data_aprovacao = db.Column(db.Date)
+
     validade_dias = db.Column(db.Integer, default=15)
 
     status = db.Column(
@@ -181,6 +191,9 @@ class Orcamento(db.Model):
         default=datetime.utcnow,
         nullable=False
     )
+
+    # Data em que o orçamento passou a contar como faturamento.
+    data_aprovacao = db.Column(db.Date)
 
     cliente = db.relationship(
         "Cliente",
@@ -210,6 +223,7 @@ class OrcamentoItem(db.Model):
         db.ForeignKey("orcamentos.id"),
         nullable=False
     )
+    tipo = db.Column(db.String(20), nullable=False, default="Serviço")
     descricao = db.Column(db.Text, nullable=False)
     quantidade = db.Column(db.Numeric(10, 2), nullable=False, default=1)
     valor_unitario = db.Column(db.Numeric(10, 2), nullable=False, default=0)
@@ -271,6 +285,9 @@ class Servico(db.Model):
         default=datetime.utcnow,
         nullable=False
     )
+
+    # Data em que o orçamento passou a contar como faturamento.
+    data_aprovacao = db.Column(db.Date)
 
     cliente = db.relationship(
         "Cliente",
@@ -560,108 +577,57 @@ def inicio():
     quantidade_clientes = Cliente.query.count()
     quantidade_orcamentos = Orcamento.query.count()
 
-    aguardando = Orcamento.query.filter_by(
-        status="Aguardando"
+    aguardando = Orcamento.query.filter(
+        Orcamento.status.notin_(["Aprovado", "Não aprovado"])
     ).count()
-
-    aprovados = Orcamento.query.filter_by(
-        status="Aprovado"
-    ).count()
-
-    nao_aprovados = Orcamento.query.filter_by(
-        status="Não aprovado"
-    ).count()
-
-    quantidade_servicos = Servico.query.count()
-
-    servicos_concluidos = Servico.query.filter_by(
-        status="Concluído"
-    ).count()
-
-    servicos_pendentes = Servico.query.filter(
-        Servico.status != "Concluído"
-    ).count()
+    aprovados = Orcamento.query.filter_by(status="Aprovado").count()
+    nao_aprovados = Orcamento.query.filter_by(status="Não aprovado").count()
 
     decididos = aprovados + nao_aprovados
+    taxa_conversao = round((aprovados / decididos) * 100, 1) if decididos else 0
 
-    taxa_conversao = (
-        round((aprovados / decididos) * 100, 1)
-        if decididos > 0
-        else 0
-    )
-
-    # RECEITAS DO MÊS
+    # REGRA DO NEGÓCIO: orçamento aprovado já é faturamento.
+    data_faturamento = func.coalesce(Orcamento.data_aprovacao, Orcamento.data_orcamento)
     faturamento = db.session.query(
-        func.coalesce(func.sum(Pagamento.valor), 0)
+        func.coalesce(func.sum(Orcamento.valor), 0)
     ).filter(
-        func.extract("month", Pagamento.data_pagamento) == hoje.month,
-        func.extract("year", Pagamento.data_pagamento) == hoje.year
+        Orcamento.status == "Aprovado",
+        func.extract("month", data_faturamento) == hoje.month,
+        func.extract("year", data_faturamento) == hoje.year
     ).scalar()
-
     faturamento = Decimal(faturamento or 0)
 
-    # CUSTOS DIRETOS
     custos_servicos = db.session.query(
         func.coalesce(func.sum(Custo.valor), 0)
     ).filter(
         func.extract("month", Custo.data_custo) == hoje.month,
         func.extract("year", Custo.data_custo) == hoje.year
     ).scalar()
-
     custos_servicos = Decimal(custos_servicos or 0)
 
-    # DESPESAS GERAIS
     despesas_gerais = db.session.query(
         func.coalesce(func.sum(Despesa.valor), 0)
     ).filter(
         func.extract("month", Despesa.data_despesa) == hoje.month,
         func.extract("year", Despesa.data_despesa) == hoje.year
     ).scalar()
-
     despesas_gerais = Decimal(despesas_gerais or 0)
 
     despesas_totais = custos_servicos + despesas_gerais
     resultado = faturamento - despesas_totais
 
-    # TICKET MÉDIO
-    pagamentos_mes = Pagamento.query.filter(
-        func.extract("month", Pagamento.data_pagamento) == hoje.month,
-        func.extract("year", Pagamento.data_pagamento) == hoje.year
+    aprovados_mes = Orcamento.query.filter(
+        Orcamento.status == "Aprovado",
+        func.extract("month", data_faturamento) == hoje.month,
+        func.extract("year", data_faturamento) == hoje.year
     ).count()
+    ticket_medio = faturamento / aprovados_mes if aprovados_mes else Decimal("0.00")
 
-    ticket_medio = (
-        faturamento / pagamentos_mes
-        if pagamentos_mes > 0
-        else Decimal("0.00")
-    )
+    meta = Meta.query.filter_by(mes=hoje.month, ano=hoje.year).first()
+    valor_meta = Decimal(meta.valor) if meta else Decimal("0.00")
+    percentual_meta = min(round(float(faturamento / valor_meta * 100), 1), 100) if valor_meta > 0 else 0
 
-    # META
-    meta = Meta.query.filter_by(
-        mes=hoje.month,
-        ano=hoje.year
-    ).first()
-
-    valor_meta = (
-        Decimal(meta.valor)
-        if meta
-        else Decimal("0.00")
-    )
-
-    percentual_meta = (
-        min(
-            round(
-                float(faturamento / valor_meta * 100),
-                1
-            ),
-            100
-        )
-        if valor_meta > 0
-        else 0
-    )
-
-    ultimos_orcamentos = Orcamento.query.order_by(
-        Orcamento.id.desc()
-    ).limit(5).all()
+    ultimos_orcamentos = Orcamento.query.order_by(Orcamento.id.desc()).limit(5).all()
 
     return render_template(
         "index.html",
@@ -671,9 +637,7 @@ def inicio():
         aprovados=aprovados,
         nao_aprovados=nao_aprovados,
         taxa_conversao=taxa_conversao,
-        quantidade_servicos=quantidade_servicos,
-        servicos_concluidos=servicos_concluidos,
-        servicos_pendentes=servicos_pendentes,
+        aprovados_mes=aprovados_mes,
         faturamento=faturamento,
         despesas_totais=despesas_totais,
         resultado=resultado,
@@ -724,6 +688,40 @@ def novo_cliente():
     return render_template("novo_cliente.html")
 
 
+@app.route("/clientes/novo-rapido", methods=["POST"])
+def novo_cliente_rapido():
+
+    nome = request.form.get("nome", "").strip()
+    telefone = request.form.get("telefone", "").strip()
+    email = request.form.get("email", "").strip() or None
+    endereco = request.form.get("endereco", "").strip() or None
+    observacoes = request.form.get("observacoes", "").strip() or None
+
+    if not nome or not telefone:
+        return {
+            "sucesso": False,
+            "erro": "Nome e telefone são obrigatórios."
+        }, 400
+
+    novo = Cliente(
+        nome=nome,
+        telefone=telefone,
+        email=email,
+        endereco=endereco,
+        observacoes=observacoes
+    )
+
+    db.session.add(novo)
+    db.session.commit()
+
+    return {
+        "sucesso": True,
+        "cliente": {
+            "id": novo.id,
+            "nome": novo.nome
+        }
+    }
+
 # =========================================================
 # ORÇAMENTOS
 # =========================================================
@@ -748,20 +746,23 @@ def novo_orcamento():
     lista_catalogo = CatalogoServico.query.filter_by(ativo=True).order_by(
         CatalogoServico.descricao.asc()
     ).all()
+    lista_materiais = Material.query.filter_by(ativo=True).order_by(Material.descricao.asc()).all()
 
     if request.method == "POST":
         cliente_id = int(request.form["cliente_id"])
         validade_dias = int(request.form.get("validade_dias", 15))
         observacoes = request.form.get("observacoes", "").strip() or None
 
+        tipos = request.form.getlist("item_tipo")
         descricoes = request.form.getlist("item_descricao")
         quantidades = request.form.getlist("item_quantidade")
         valores = request.form.getlist("item_valor")
 
         itens = []
-        for descricao, quantidade_texto, valor_texto in zip(
-            descricoes, quantidades, valores
+        for tipo, descricao, quantidade_texto, valor_texto in zip(
+            tipos, descricoes, quantidades, valores
         ):
+            tipo = "Material" if tipo == "Material" else "Serviço"
             descricao = descricao.strip()
             if not descricao:
                 continue
@@ -770,7 +771,7 @@ def novo_orcamento():
             if quantidade <= 0:
                 continue
             valor_total = (quantidade * valor_unitario).quantize(Decimal("0.01"))
-            itens.append((descricao, quantidade, valor_unitario, valor_total))
+            itens.append((tipo, descricao, quantidade, valor_unitario, valor_total))
 
         # Compatibilidade com o formulário antigo.
         if not itens:
@@ -778,14 +779,14 @@ def novo_orcamento():
             valor_texto = request.form.get("valor", "0").strip().replace(",", ".")
             if descricao:
                 valor = Decimal(valor_texto or "0")
-                itens.append((descricao, Decimal("1"), valor, valor))
+                itens.append(("Serviço", descricao, Decimal("1"), valor, valor))
 
         if not itens:
             return redirect(url_for("novo_orcamento"))
 
-        total = sum((item[3] for item in itens), Decimal("0.00"))
+        total = sum((item[4] for item in itens), Decimal("0.00"))
         descricao_resumo = "\n".join(
-            f"{int(item[1])}x - {item[0]}" for item in itens
+            f"{int(item[2])}x - {item[1]}" for item in itens
         )
 
         novo = Orcamento(
@@ -800,9 +801,10 @@ def novo_orcamento():
         db.session.add(novo)
         db.session.flush()
 
-        for descricao, quantidade, valor_unitario, valor_total in itens:
+        for tipo, descricao, quantidade, valor_unitario, valor_total in itens:
             db.session.add(OrcamentoItem(
                 orcamento_id=novo.id,
+                tipo=tipo,
                 descricao=descricao,
                 quantidade=quantidade,
                 valor_unitario=valor_unitario,
@@ -815,7 +817,8 @@ def novo_orcamento():
     return render_template(
         "novo_orcamento.html",
         clientes=lista_clientes,
-        catalogo=lista_catalogo
+        catalogo=lista_catalogo,
+        materiais=lista_materiais
     )
 
 
@@ -833,25 +836,29 @@ def editar_orcamento(id):
     ).all()
 
     itens_tela = orcamento.itens[:] if orcamento.itens else [{
+        "tipo": "Serviço",
         "descricao": orcamento.descricao,
         "quantidade": Decimal("1"),
         "valor_unitario": Decimal(orcamento.valor or 0),
         "valor_total": Decimal(orcamento.valor or 0)
     }]
+    lista_materiais = Material.query.filter_by(ativo=True).order_by(Material.descricao.asc()).all()
 
     if request.method == "POST":
         cliente_id = int(request.form["cliente_id"])
         validade_dias = int(request.form.get("validade_dias", 15))
         observacoes = request.form.get("observacoes", "").strip() or None
 
+        tipos = request.form.getlist("item_tipo")
         descricoes = request.form.getlist("item_descricao")
         quantidades = request.form.getlist("item_quantidade")
         valores = request.form.getlist("item_valor")
 
         itens = []
-        for descricao, quantidade_texto, valor_texto in zip(
-            descricoes, quantidades, valores
+        for tipo, descricao, quantidade_texto, valor_texto in zip(
+            tipos, descricoes, quantidades, valores
         ):
+            tipo = "Material" if tipo == "Material" else "Serviço"
             descricao = descricao.strip()
             if not descricao:
                 continue
@@ -860,26 +867,27 @@ def editar_orcamento(id):
             if quantidade <= 0:
                 continue
             valor_total = (quantidade * valor_unitario).quantize(Decimal("0.01"))
-            itens.append((descricao, quantidade, valor_unitario, valor_total))
+            itens.append((tipo, descricao, quantidade, valor_unitario, valor_total))
 
         if not itens:
             return redirect(url_for("editar_orcamento", id=id))
 
         orcamento.cliente_id = cliente_id
-        orcamento.valor = sum((item[3] for item in itens), Decimal("0.00"))
+        orcamento.valor = sum((item[4] for item in itens), Decimal("0.00"))
         orcamento.validade_dias = validade_dias
         orcamento.observacoes = observacoes
         orcamento.descricao = "\n".join(
-            f"{int(item[1])}x - {item[0]}" for item in itens
+            f"{int(item[2])}x - {item[1]}" for item in itens
         )
 
         for item in list(orcamento.itens):
             db.session.delete(item)
         db.session.flush()
 
-        for descricao, quantidade, valor_unitario, valor_total in itens:
+        for tipo, descricao, quantidade, valor_unitario, valor_total in itens:
             db.session.add(OrcamentoItem(
                 orcamento_id=orcamento.id,
+                tipo=tipo,
                 descricao=descricao,
                 quantidade=quantidade,
                 valor_unitario=valor_unitario,
@@ -893,6 +901,7 @@ def editar_orcamento(id):
         "novo_orcamento.html",
         clientes=lista_clientes,
         catalogo=lista_catalogo,
+        materiais=lista_materiais,
         orcamento=orcamento,
         itens_edicao=itens_tela
     )
@@ -900,37 +909,12 @@ def editar_orcamento(id):
 
 @app.route("/orcamentos/<int:id>/aprovar", methods=["POST"])
 def aprovar_orcamento(id):
-
     orcamento = db.get_or_404(Orcamento, id)
-
     orcamento.status = "Aprovado"
     orcamento.motivo_perda = None
-
-    if orcamento.servico is None:
-
-        descricao_servico = (
-            "\n".join(
-                f"{int(item.quantidade)}x - {item.descricao}"
-                for item in orcamento.itens
-            )
-            if orcamento.itens
-            else orcamento.descricao
-        )
-
-        novo_servico = Servico(
-            numero_os=orcamento.id,
-            cliente_id=orcamento.cliente_id,
-            orcamento_id=orcamento.id,
-            descricao=descricao_servico,
-            valor=orcamento.valor,
-            status="Aguardando execução"
-        )
-
-        db.session.add(novo_servico)
-
+    orcamento.data_aprovacao = date.today()
     db.session.commit()
-
-    return redirect(url_for("servicos"))
+    return redirect(url_for("orcamentos"))
 
 
 @app.route("/orcamentos/<int:id>/recusar", methods=["POST"])
@@ -1268,7 +1252,7 @@ def gerar_orcamento_pdf(id):
     # SERVIÇOS / ITENS
     # =====================================================
 
-    elementos.append(Paragraph("SERVIÇOS", estilo_laranja))
+    elementos.append(Paragraph("ITENS DO ORÇAMENTO", estilo_laranja))
     elementos.append(Spacer(1, 3 * mm))
 
     itens_pdf = orcamento.itens
@@ -1278,6 +1262,7 @@ def gerar_orcamento_pdf(id):
                 "ItemLegado",
                 (),
                 {
+                    "tipo": "Serviço",
                     "descricao": orcamento.descricao,
                     "quantidade": Decimal("1"),
                     "valor_unitario": Decimal(orcamento.valor or 0),
@@ -1295,6 +1280,7 @@ def gerar_orcamento_pdf(id):
         )
 
     tabela_dados = [[
+        Paragraph("<b>Tipo</b>", estilo_normal),
         Paragraph("<b>Descrição</b>", estilo_normal),
         Paragraph("<b>Qtd.</b>", estilo_normal),
         Paragraph("<b>Valor unit.</b>", estilo_normal),
@@ -1306,6 +1292,7 @@ def gerar_orcamento_pdf(id):
         unit = Decimal(item.valor_unitario or 0)
         total_item = Decimal(item.valor_total or (qtd * unit))
         tabela_dados.append([
+            Paragraph(str(getattr(item, "tipo", "Serviço")), estilo_normal),
             Paragraph(str(item.descricao).replace("\n", "<br/>"), estilo_normal),
             str(int(qtd)),
             dinheiro(unit),
@@ -1314,7 +1301,7 @@ def gerar_orcamento_pdf(id):
 
     tabela_servico = Table(
         tabela_dados,
-        colWidths=[86 * mm, 18 * mm, 35 * mm, 35 * mm],
+        colWidths=[25 * mm, 61 * mm, 18 * mm, 35 * mm, 35 * mm],
         repeatRows=1
     )
 
@@ -1323,7 +1310,7 @@ def gerar_orcamento_pdf(id):
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#111111")),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+        ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
         ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#FF7900")),
         ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E5E7EB")),
         ("PADDING", (0, 0), (-1, -1), 7)
@@ -1863,39 +1850,21 @@ def finalizar_servico(id):
 
 @app.route("/financeiro")
 def financeiro():
-
-    pagamentos = Pagamento.query.order_by(
-        Pagamento.data_pagamento.desc(),
-        Pagamento.id.desc()
+    orcamentos_aprovados = Orcamento.query.filter_by(status="Aprovado").order_by(
+        func.coalesce(Orcamento.data_aprovacao, Orcamento.data_orcamento).desc(),
+        Orcamento.id.desc()
     ).all()
-
-    despesas = Despesa.query.order_by(
-        Despesa.data_despesa.desc(),
-        Despesa.id.desc()
-    ).all()
-
-    total_entradas = db.session.query(
-        func.coalesce(func.sum(Pagamento.valor), 0)
+    despesas = Despesa.query.order_by(Despesa.data_despesa.desc(), Despesa.id.desc()).all()
+    total_entradas = db.session.query(func.coalesce(func.sum(Orcamento.valor), 0)).filter(
+        Orcamento.status == "Aprovado"
     ).scalar()
-
-    total_custos = db.session.query(
-        func.coalesce(func.sum(Custo.valor), 0)
-    ).scalar()
-
-    total_despesas = db.session.query(
-        func.coalesce(func.sum(Despesa.valor), 0)
-    ).scalar()
-
-    total_saidas = (
-        Decimal(total_custos or 0)
-        + Decimal(total_despesas or 0)
-    )
-
+    total_custos = db.session.query(func.coalesce(func.sum(Custo.valor), 0)).scalar()
+    total_despesas = db.session.query(func.coalesce(func.sum(Despesa.valor), 0)).scalar()
+    total_saidas = Decimal(total_custos or 0) + Decimal(total_despesas or 0)
     saldo = Decimal(total_entradas or 0) - total_saidas
-
     return render_template(
         "financeiro.html",
-        pagamentos=pagamentos,
+        orcamentos_aprovados=orcamentos_aprovados,
         despesas=despesas,
         total_entradas=total_entradas,
         total_saidas=total_saidas,
@@ -2304,6 +2273,17 @@ def configuracoes():
 # Garante a criação de novas tabelas também no deploy via Gunicorn/Railway.
 with app.app_context():
     db.create_all()
+    # Migrações aditivas e seguras para instalações existentes no Neon.
+    db.session.execute(text(
+        "ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS data_aprovacao DATE"
+    ))
+    db.session.execute(text(
+        "ALTER TABLE orcamento_itens ADD COLUMN IF NOT EXISTS tipo VARCHAR(20) DEFAULT 'Serviço'"
+    ))
+    db.session.execute(text(
+        "UPDATE orcamento_itens SET tipo = 'Serviço' WHERE tipo IS NULL"
+    ))
+    db.session.commit()
 
 
 if __name__ == "__main__":
