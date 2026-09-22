@@ -629,6 +629,11 @@ def inicio():
 
     ultimos_orcamentos = Orcamento.query.order_by(Orcamento.id.desc()).limit(5).all()
 
+    servicos_concluidos = Servico.query.filter_by(
+    status="Concluído"
+).count()
+   
+
     return render_template(
         "index.html",
         quantidade_clientes=quantidade_clientes,
@@ -644,9 +649,13 @@ def inicio():
         ticket_medio=ticket_medio,
         valor_meta=valor_meta,
         percentual_meta=percentual_meta,
-        ultimos_orcamentos=ultimos_orcamentos
+        ultimos_orcamentos=ultimos_orcamentos,
+        servicos_concluidos=servicos_concluidos,
+        
     )
-
+        
+    
+        
 
 # =========================================================
 # CLIENTES
