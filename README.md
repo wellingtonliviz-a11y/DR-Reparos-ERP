@@ -150,19 +150,7 @@ Elaboração e acompanhamento dos orçamentos.
 
 ![Tela de orçamentos](docs/imagens/orcamentos.png)
 
-### 4. Serviços
-
-Organização dos serviços e atendimentos.
-
-![Tela de serviços](docs/imagens/servicos.png)
-
-### 5. Custos e despesas
-
-Controle dos gastos operacionais.
-
-![Tela de custos e despesas](docs/imagens/despesas.png)
-
-### 6. Acesso pelo celular
+### 4. Acesso pelo celular
 
 Interface do ERP acessada pelo navegador do celular.
 
