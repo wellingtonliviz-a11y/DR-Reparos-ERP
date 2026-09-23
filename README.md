@@ -7,14 +7,15 @@
 
 ### Sistema de gestão para manutenção residencial
 
-**Uma solução desenvolvida a partir das necessidades reais da DR Reparos.**
+**Tecnologia aplicada à gestão de uma empresa real.**
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Render](https://img.shields.io/badge/Render-000000?style=for-the-badge&logo=render&logoColor=white)
+![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)
+![Neon](https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=postgresql&logoColor=black)
 
-**Status: Em desenvolvimento | Aplicação implantada na nuvem**
+**Status: Em desenvolvimento | Aplicação publicada na nuvem**
 
 </div>
 
@@ -22,13 +23,11 @@
 
 ## 📖 Sobre o projeto
 
-O DR Reparos ERP é um sistema web que estou desenvolvendo para administrar minha própria empresa de manutenção residencial.
+O DR Reparos ERP é um sistema web desenvolvido para administrar minha própria empresa de manutenção residencial.
 
-O projeto surgiu da necessidade de substituir controles manuais por uma aplicação que centralize clientes, orçamentos, ordens de serviço, materiais e informações financeiras.
+O projeto surgiu da necessidade de substituir controles manuais por uma aplicação que centralizasse clientes, orçamentos, serviços e informações financeiras.
 
-Mais do que um projeto acadêmico, o ERP está sendo construído para atender às necessidades de uma operação comercial existente.
-
-Seu desenvolvimento envolve a aplicação prática de conhecimentos de programação, banco de dados, desenvolvimento web e infraestrutura em nuvem.
+Mais do que um exercício acadêmico, o sistema está sendo construído para atender às necessidades de uma empresa em operação.
 
 ---
 
@@ -38,9 +37,9 @@ Seu desenvolvimento envolve a aplicação prática de conhecimentos de programa�
 - Organizar os orçamentos e serviços.
 - Acompanhar o faturamento da empresa.
 - Controlar custos e despesas.
-- Gerenciar materiais e estoque.
 - Facilitar a tomada de decisões.
-- Disponibilizar o sistema pelo celular e computador.
+- Disponibilizar o sistema pelo computador e celular.
+- Evoluir o controle de materiais e estoque.
 
 ---
 
@@ -50,26 +49,27 @@ Seu desenvolvimento envolve a aplicação prática de conhecimentos de programa�
 |---|---|
 | Python | Linguagem principal |
 | Flask | Desenvolvimento do back-end |
-| HTML / CSS | Interface da aplicação |
+| HTML / CSS | Interface web |
 | PostgreSQL | Banco de dados relacional |
 | Neon | Hospedagem do banco de dados |
-| Render | Hospedagem da aplicação |
+| Railway | Hospedagem da aplicação |
 | Git | Controle de versões |
 | GitHub | Repositório e documentação |
+| VS Code | Ambiente de desenvolvimento |
 
 ---
 
 ## 🏗️ Arquitetura
 
-A aplicação utiliza Python e Flask no back-end, com páginas HTML e CSS e persistência de dados em PostgreSQL.
+O ERP utiliza Python e Flask no back-end, páginas HTML e CSS na interface e PostgreSQL para persistência dos dados.
 
 ```text
            USUÁRIO
               |
-       COMPUTADOR / CELULAR
+     COMPUTADOR / CELULAR
               |
               v
-         INTERFACE WEB
+        INTERFACE WEB
           HTML + CSS
               |
               v
@@ -81,9 +81,11 @@ A aplicação utiliza Python e Flask no back-end, com páginas HTML e CSS e pers
               v
          POSTGRESQL
             NEON
+
+Aplicação hospedada no Railway
 ```
 
-A aplicação é hospedada no Render e utiliza o Neon como serviço de banco de dados.
+O código é versionado no GitHub e a aplicação é publicada no Railway, utilizando o Neon como serviço de banco de dados.
 
 ---
 
@@ -91,140 +93,133 @@ A aplicação é hospedada no Render e utiliza o Neon como serviço de banco de 
 
 ### 📊 Dashboard
 
-Painel desenvolvido para acompanhar indicadores operacionais e financeiros da empresa.
+Painel para acompanhar informações operacionais e financeiras, incluindo:
 
-Entre os indicadores contemplados pelo projeto estão:
-
-- Faturamento.
-- Despesas.
-- Resultado financeiro.
-- Ticket médio.
-- Metas de faturamento.
-- Conversão de orçamentos.
+- Indicadores de faturamento.
+- Custos e despesas.
+- Orçamentos faturados no mês.
+- Acompanhamento dos resultados da empresa.
 
 ### 👥 Clientes
 
-Módulo de cadastro e consulta de clientes, permitindo organizar informações de contato e relacioná-las aos atendimentos.
-
-O cadastro já foi implementado e testado.
+Cadastro e gerenciamento de clientes, com informações de contato para organizar os atendimentos.
 
 ### 📝 Orçamentos
 
-Módulo para organizar propostas comerciais, incluindo serviços, materiais e valores.
+Módulo para elaboração e acompanhamento de propostas comerciais.
 
-O projeto contempla o acompanhamento da aprovação dos orçamentos e sua relação com as ordens de serviço.
+- Identificação do cliente.
+- Descrição dos serviços e materiais.
+- Valores dos orçamentos.
+- Organização dos itens da proposta.
+- Acompanhamento dos orçamentos.
 
-### 🔧 Ordens de serviço
+### 🔧 Serviços
 
-Estrutura para organizar a execução dos serviços, incluindo agendamentos e vínculos com os orçamentos.
-
-### 📦 Estoque
-
-Estrutura destinada ao cadastro e controle dos materiais utilizados pela empresa, incluindo quantidades, custos e estoque mínimo.
+Organização dos atendimentos e serviços realizados pela empresa.
 
 ### 💰 Financeiro
 
-Estruturas para acompanhar pagamentos, despesas, custos operacionais e metas da empresa.
+Acompanhamento dos custos e despesas relacionados à operação, com informações integradas ao dashboard.
 
-Os módulos estão em diferentes estágios de implementação e validação.
+### 📦 Estoque
+
+Módulo previsto para evolução do controle de materiais, quantidades e custos.
+
+---
+
+## 📸 Telas do sistema
+
+As imagens abaixo documentam a interface e as funcionalidades do ERP.
+
+### 1. Dashboard
+
+Visão geral dos indicadores operacionais e financeiros.
+
+![Dashboard do DR Reparos ERP](docs/imagens/dashboard.png)
+
+### 2. Cadastro de clientes
+
+Cadastro e consulta dos clientes da empresa.
+
+![Tela de clientes](docs/imagens/clientes.png)
+
+### 3. Orçamentos
+
+Elaboração e acompanhamento dos orçamentos.
+
+![Tela de orçamentos](docs/imagens/orcamentos.png)
+
+### 4. Serviços
+
+Organização dos serviços e atendimentos.
+
+![Tela de serviços](docs/imagens/servicos.png)
+
+### 5. Custos e despesas
+
+Controle dos gastos operacionais.
+
+![Tela de custos e despesas](docs/imagens/despesas.png)
+
+### 6. Acesso pelo celular
+
+Interface do ERP acessada pelo navegador do celular.
+
+![DR Reparos ERP no celular](docs/imagens/celular.png)
 
 ---
 
 ## 🔄 Fluxo operacional
 
-O ERP foi concebido para acompanhar o ciclo de atendimento da DR Reparos:
+O sistema foi concebido para acompanhar o atendimento da DR Reparos:
 
 1. Cadastro do cliente.
 2. Elaboração do orçamento.
 3. Aprovação da proposta.
-4. Abertura e acompanhamento da ordem de serviço.
-5. Execução do atendimento.
-6. Registro financeiro.
-7. Acompanhamento dos indicadores.
+4. Organização e execução do serviço.
+5. Registro de custos e despesas.
+6. Acompanhamento dos indicadores.
 
-Esse fluxo orienta o desenvolvimento e a integração dos módulos do sistema.
+Os módulos continuam sendo integrados e aprimorados conforme as necessidades da empresa.
 
 ---
 
 ## ☁️ Infraestrutura e deploy
 
-O projeto está hospedado na nuvem utilizando o Render.
+A aplicação está hospedada no **Railway**, com banco de dados **PostgreSQL no Neon**.
 
-O banco de dados PostgreSQL utiliza a infraestrutura do Neon, permitindo manter os dados separados da instância de execução da aplicação.
+O projeto utiliza Git e GitHub para controle de versões e publicação de alterações.
 
-Durante o desenvolvimento, foram realizados testes de acesso pelo computador e pelo celular.
-
----
-
-## 🧪 Testes com dados reais
-
-A próxima etapa é cadastrar os clientes existentes e registrar serviços reais da DR Reparos.
-
-O objetivo é testar os módulos com informações da operação, verificar os cálculos e identificar melhorias antes de ampliar a utilização do sistema.
-
----
-
-## 📸 Demonstração
-
-As capturas de tela serão adicionadas conforme a documentação dos módulos.
-
-### Dashboard
-
-*Captura de tela em preparação.*
-
-### Cadastro de clientes
-
-*Captura de tela em preparação.*
-
-### Orçamentos e serviços
-
-*Capturas de tela em preparação.*
+O sistema também foi testado pelo celular, permitindo acessar suas funcionalidades fora do computador.
 
 ---
 
 ## 🧠 Desafios e aprendizados
 
-Durante o desenvolvimento, trabalhei com:
+Durante o desenvolvimento do ERP, trabalhei com:
 
-- Construção de aplicações web utilizando Flask.
+- Desenvolvimento de aplicações web com Python e Flask.
 - Organização de rotas e regras de negócio.
-- Modelagem e persistência de dados.
-- Configuração de banco PostgreSQL na nuvem.
-- Implantação da aplicação no Render.
-- Testes de acesso pelo celular.
-- Versionamento e publicação no GitHub.
-- Desenvolvimento orientado a problemas reais.
-
-A experiência também envolve compreender os requisitos da empresa e transformá-los em funcionalidades de software.
+- Integração com banco de dados PostgreSQL.
+- Configuração do banco na nuvem utilizando Neon.
+- Publicação e atualização da aplicação no Railway.
+- Versionamento com Git e GitHub.
+- Correção de problemas identificados durante os testes.
+- Adaptação da interface para acesso pelo celular.
+- Desenvolvimento de funcionalidades a partir de necessidades reais da empresa.
 
 ---
 
 ## 🚀 Próximas etapas
 
-- Cadastrar clientes e serviços reais.
-- Ampliar os testes dos módulos.
-- Evoluir os fluxos de orçamentos e ordens de serviço.
-- Aprimorar o controle financeiro.
+- Ampliar os testes com dados reais.
+- Aprimorar os fluxos de orçamentos e serviços.
+- Evoluir o controle financeiro.
 - Desenvolver relatórios gerenciais.
-- Melhorar a experiência de utilização pelo celular.
+- Implementar e integrar o controle de estoque.
+- Melhorar continuamente a experiência pelo celular.
 - Ampliar a documentação técnica.
-
----
-
-## 📂 Estrutura do repositório
-
-```text
-DR-Reparos-ERP/
-|
-|-- static/
-|-- templates/
-|-- app.py
-|-- importar_dados.py
-|-- requirements.txt
-|-- .gitignore
-|-- logo-erp.png
-|-- README.md
-```
 
 ---
 
