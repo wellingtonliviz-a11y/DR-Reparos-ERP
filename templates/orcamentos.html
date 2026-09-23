@@ -69,10 +69,13 @@ Orçamentos | DR Reparos ERP
                         </strong>
                     </td>
 
-                    <!-- ITENS DO ORÇAMENTO -->
-                    <td>
-                        {{ orcamento.descricao|e|replace("\n", "<br>")|safe }}
-                    </td>
+                   <!-- ITENS DO ORÇAMENTO -->
+                    <td style="white-space: pre-line;">{{ orcamento.descricao
+                        |replace('<br />', '\n')
+                        |replace('<br/>', '\n')
+                        |replace('<br>', '\n')
+                        |replace('&lt;br&gt;', '\n')
+                    }}</td>
 
                     <!-- VALOR TOTAL -->
                     <td>
