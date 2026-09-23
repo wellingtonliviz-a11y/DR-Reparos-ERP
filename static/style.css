@@ -1584,3 +1584,37 @@ td {
     background: #ff7900;
     color: #ffffff;
 }
+/* Cartões navegáveis do dashboard */
+a.card-link { display: flex; flex-direction: column; text-decoration: none; color: inherit; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+a.card-link:hover, a.card-link:focus-visible { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(255,121,0,.24); outline: 2px solid #ff7900; outline-offset: 2px; }
+.filtros-servicos { display: flex; flex-wrap: wrap; gap: 12px; margin: 15px 0; }
+.filtros-servicos .filtro-ativo { border: 2px solid #ff7900; font-weight: bold; }
+.mensagem-erro { padding: 12px; border: 1px solid #b91c1c; border-radius: 8px; color: #b91c1c; margin-bottom: 16px; }
+#custos-despesas { scroll-margin-top: 24px; }
+#custos-despesas h3 { margin-top: 22px; }
+
+/* Cartões clicáveis do dashboard */
+.card-link {
+    cursor: pointer;
+    transition: background-color 0.2s ease,
+                color 0.2s ease,
+                transform 0.2s ease;
+}
+
+.card-link:hover {
+    background-color: #ff7900;
+    color: #ffffff;
+    transform: translateY(-3px);
+}
+
+.card-link:hover span,
+.card-link:hover strong {
+    color: #ffffff;
+}
+
+/* Padronização dos textos digitados */
+input[type="text"],
+input:not([type]),
+textarea {
+    text-transform: uppercase;
+}
