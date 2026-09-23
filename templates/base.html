@@ -36,6 +36,24 @@
     >
 </head>
 
+<script>
+document.addEventListener("input", function (event) {
+    const campo = event.target;
+
+    if (
+        campo.matches('input[type="text"], input:not([type]), textarea') &&
+        !["email", "password"].includes(campo.name)
+    ) {
+        const inicio = campo.selectionStart;
+        const fim = campo.selectionEnd;
+
+        campo.value = campo.value.toLocaleUpperCase("pt-BR");
+
+        campo.setSelectionRange(inicio, fim);
+    }
+});
+</script>
+
 <body>
 
 <div class="layout">

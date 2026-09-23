@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}
@@ -16,7 +17,6 @@ Orçamentos | DR Reparos ERP
     </button>
 </div>
 
-
 <header class="topo">
 
     <div>
@@ -32,7 +32,6 @@ Orçamentos | DR Reparos ERP
     </a>
 
 </header>
-
 
 <section class="painel">
 
@@ -52,7 +51,6 @@ Orçamentos | DR Reparos ERP
                 </tr>
             </thead>
 
-
             <tbody>
 
                 {% for orcamento in orcamentos %}
@@ -64,7 +62,6 @@ Orçamentos | DR Reparos ERP
                         #{{ "%04d"|format(orcamento.id) }}
                     </td>
 
-
                     <!-- CLIENTE -->
                     <td>
                         <strong>
@@ -72,12 +69,10 @@ Orçamentos | DR Reparos ERP
                         </strong>
                     </td>
 
-
                     <!-- ITENS DO ORÇAMENTO -->
                     <td>
-                        {{ orcamento.descricao|replace("\n", "<br>")|safe }}
+                        {{ orcamento.descricao|e|replace("\n", "<br>")|safe }}
                     </td>
-
 
                     <!-- VALOR TOTAL -->
                     <td>
@@ -86,12 +81,10 @@ Orçamentos | DR Reparos ERP
                         </strong>
                     </td>
 
-
                     <!-- DATA -->
                     <td>
                         {{ orcamento.data_orcamento.strftime("%d/%m/%Y") }}
                     </td>
-
 
                     <!-- STATUS -->
                     <td>
@@ -118,7 +111,6 @@ Orçamentos | DR Reparos ERP
 
                     </td>
 
-
                     <!-- AÇÕES -->
                     <td>
 
@@ -127,7 +119,7 @@ Orçamentos | DR Reparos ERP
                             {% if orcamento.status != "Aprovado"
                                   and orcamento.status != "Não aprovado" %}
 
-                                <!-- EDITAR -->
+                                <!-- EDITAR ORÇAMENTO -->
                                 <a
                                     href="{{ url_for(
                                         'editar_orcamento',
@@ -138,8 +130,7 @@ Orçamentos | DR Reparos ERP
                                     ✏️ Editar
                                 </a>
 
-
-                                <!-- APROVAR -->
+                                <!-- APROVAR ORÇAMENTO -->
                                 <form
                                     method="POST"
                                     action="{{ url_for(
@@ -158,8 +149,7 @@ Orçamentos | DR Reparos ERP
 
                                 </form>
 
-
-                                <!-- NÃO APROVADO -->
+                                <!-- NÃO APROVAR -->
                                 <button
                                     type="button"
                                     class="btn-recusar"
@@ -168,16 +158,31 @@ Orçamentos | DR Reparos ERP
                                     ✕ Não aprovado
                                 </button>
 
-
                             {% elif orcamento.status == "Aprovado" %}
 
+                                <!-- ORÇAMENTO FATURADO -->
                                 <span class="orcamento-encerrado">
                                     ✓ Faturado
                                 </span>
 
+                                <!-- ADICIONAR GASTOS -->
+                                <a
+                                    href="{{ url_for(
+                                        'gastos_orcamento',
+                                        id=orcamento.id
+                                    ) }}"
+                                    class="btn-detalhes"
+                                    style="
+                                        display: inline-block;
+                                        margin-top: 10px;
+                                    "
+                                >
+                                    💰 Adicionar gastos
+                                </a>
 
                             {% else %}
 
+                                <!-- ORÇAMENTO NÃO APROVADO -->
                                 <span class="orcamento-encerrado">
                                     Encerrado
                                 </span>
@@ -185,7 +190,6 @@ Orçamentos | DR Reparos ERP
                             {% endif %}
 
                         </div>
-
 
                         <!-- GERAR PDF -->
                         <div style="margin-top: 8px;">
@@ -203,7 +207,6 @@ Orçamentos | DR Reparos ERP
 
                         </div>
 
-
                         <!-- MOTIVO DA NÃO APROVAÇÃO -->
                         {% if orcamento.status == "Não aprovado"
                               and orcamento.motivo_perda %}
@@ -216,7 +219,6 @@ Orçamentos | DR Reparos ERP
                             </div>
 
                         {% endif %}
-
 
                         <!-- FORMULÁRIO DE NÃO APROVAÇÃO -->
                         {% if orcamento.status != "Aprovado"
@@ -236,11 +238,12 @@ Orçamentos | DR Reparos ERP
                                     ) }}"
                                 >
 
-                                    <label>
+                                    <label for="motivo-{{ orcamento.id }}">
                                         Motivo da não aprovação
                                     </label>
 
                                     <input
+                                        id="motivo-{{ orcamento.id }}"
                                         type="text"
                                         name="motivo_perda"
                                         placeholder="Ex.: Cliente achou o valor alto"
@@ -275,7 +278,6 @@ Orçamentos | DR Reparos ERP
 
                 </tr>
 
-
                 {% else %}
 
                 <tr>
@@ -294,7 +296,6 @@ Orçamentos | DR Reparos ERP
 
 </section>
 
-
 <script>
 
 function abrirRecusa(id) {
@@ -306,7 +307,6 @@ function abrirRecusa(id) {
     }
 
 }
-
 
 function fecharRecusa(id) {
 

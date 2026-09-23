@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Editar Cliente | DR Reparos ERP{% endblock %}
+{% block content %}
+<a class="btn-voltar" href="{{ url_for('clientes') }}">← Voltar</a>
+<header class="topo"><div><h1>Editar cliente</h1><p>Atualize os dados sem perder o histórico de serviços e orçamentos.</p></div></header>
+<section class="painel">
+{% if erro %}<p role="alert" class="mensagem-erro">{{ erro }}</p>{% endif %}
+<form method="POST">
+<label for="nome">Nome *</label><input id="nome" name="nome" maxlength="150" value="{{ request.form.get('nome', cliente.nome) }}" required>
+<label for="telefone">Telefone / WhatsApp *</label><input id="telefone" name="telefone" maxlength="30" value="{{ request.form.get('telefone', cliente.telefone) }}" required>
+<label for="email">E-mail</label><input id="email" type="email" name="email" maxlength="150" value="{{ request.form.get('email', cliente.email or '') }}">
+<label for="endereco">Endereço</label><input id="endereco" name="endereco" maxlength="250" value="{{ request.form.get('endereco', cliente.endereco or '') }}">
+<label for="observacoes">Observações</label><textarea id="observacoes" name="observacoes">{{ request.form.get('observacoes', cliente.observacoes or '') }}</textarea>
+<div class="acoes-form"><button class="btn-principal" type="submit">Salvar alterações</button><a class="btn-secundario" href="{{ url_for('clientes') }}">Cancelar</a></div>
+</form>
+</section>
+{% endblock %}

@@ -22,6 +22,10 @@ Serviços | DR Reparos ERP
 </header>
 
 
+<nav class="filtros-servicos" aria-label="Filtrar serviços">
+    <a class="btn-secundario {{ 'filtro-ativo' if not filtro_status else '' }}" href="{{ url_for('servicos') }}">Todos</a>
+    <a class="btn-secundario {{ 'filtro-ativo' if filtro_status == 'Concluído' else '' }}" href="{{ url_for('servicos', status='Concluído') }}">Concluídos</a>
+</nav>
 <section class="painel">
 
     <div class="tabela-container">

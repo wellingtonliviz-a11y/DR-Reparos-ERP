@@ -41,6 +41,7 @@
                     <th>Telefone</th>
                     <th>Endereço</th>
                     <th>Cadastro</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
 
@@ -68,12 +69,13 @@
                             -
                         {% endif %}
                     </td>
+                    <td><a class="btn-editar" href="{{ url_for('editar_cliente', id=cliente.id) }}">Editar</a></td>
                 </tr>
 
                 {% else %}
 
                 <tr>
-                    <td colspan="4">
+                    <td colspan="5">
                         Nenhum cliente cadastrado.
                     </td>
                 </tr>

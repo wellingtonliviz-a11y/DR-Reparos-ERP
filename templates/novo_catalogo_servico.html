@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Novo Serviço | DR Reparos ERP{% endblock %}
+{% block content %}
+<a class="btn-voltar" href="{{ url_for('catalogo_servicos') }}">← Voltar</a>
+<div class="cabecalho-pagina"><div><h1>Novo serviço no catálogo</h1><p>Cadastre um serviço e seus valores de referência.</p></div></div>
+<div class="form-card">
+{% if erro %}<p role="alert" class="mensagem-erro">{{ erro }}</p>{% endif %}
+<form method="POST">
+<div class="form-grupo">
+    <label for="codigo">Código automático</label>
+
+    <input
+        id="codigo"
+        value="{{ codigo_automatico }}"
+        readonly
+        aria-describedby="ajuda-codigo"
+    >
+
+    <small id="ajuda-codigo">
+        O código será confirmado automaticamente ao salvar.
+    </small>
+</div>
+<div class="form-grupo"><label for="descricao">Nome do serviço *</label><input id="descricao" name="descricao" maxlength="200" value="{{ request.form.get('descricao', '') }}" required></div>
+<div class="form-grupo"><label for="complemento">Complemento</label><input id="complemento" name="complemento" maxlength="200" value="{{ request.form.get('complemento', '') }}"></div>
+<div class="form-grupo"><label for="categoria">Categoria</label><input id="categoria" name="categoria" maxlength="100" value="{{ request.form.get('categoria', '') }}"></div>
+<div class="form-grupo"><label for="custo_base">Custo base (R$)</label><input id="custo_base" type="number" name="custo_base" min="0" step="0.01" value="{{ request.form.get('custo_base', '0.00') }}"></div>
+<div class="form-grupo"><label for="valor_base">Valor sugerido (R$) *</label><input id="valor_base" type="number" name="valor_base" min="0" step="0.01" value="{{ request.form.get('valor_base', '') }}" required></div>
+<div class="acoes-form"><button type="submit" class="btn-principal">Cadastrar serviço</button><a href="{{ url_for('catalogo_servicos') }}" class="btn-secundario">Cancelar</a></div>
+</form>
+</div>
+{% endblock %}

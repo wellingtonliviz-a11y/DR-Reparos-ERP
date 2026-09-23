@@ -31,13 +31,13 @@ Dashboard | DR Reparos ERP
     </div>
 
 
-    <div class="card">
+    <a class="card card-link" href="{{ url_for('financeiro') }}#custos-despesas" aria-label="Ver custos e despesas no Financeiro">
         <span>Custos + despesas</span>
 
         <strong>
             R$ {{ "%.2f"|format(despesas_totais)|replace(".", ",") }}
         </strong>
-    </div>
+    </a>
 
 
     <div class="card destaque">
@@ -58,13 +58,18 @@ Dashboard | DR Reparos ERP
     </div>
 
 
-    <div class="card">
-        <span>Serviços concluídos</span>
+    
+            <a class="card card-link"
+            href="{{ url_for('orcamentos') }}"
+            aria-label="Ver orçamentos faturados">
 
-        <strong>
-            {{ servicos_concluidos }}
-        </strong>
-    </div>
+                <span>Orçamentos faturados no mês</span>
+
+                <strong>
+                    {{ servicos_faturados }}
+                </strong>
+
+            </a>
 
 
     <div class="card">

@@ -1,0 +1,214 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+Gastos do orçamento | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<a href="{{ url_for('orcamentos') }}" class="btn-voltar">
+    ← Voltar aos orçamentos
+</a>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>Gastos do orçamento #{{ "%04d"|format(orcamento.id) }}</h1>
+        <p>{{ orcamento.cliente.nome }}</p>
+    </div>
+</div>
+
+<!-- RESUMO FINANCEIRO -->
+
+<div class="form-card">
+
+    <h2>Resumo financeiro</h2>
+
+    <p>
+        <strong>Valor faturado:</strong>
+        R$ {{ "%.2f"|format(orcamento.valor)|replace(".", ",") }}
+    </p>
+
+    <p>
+        <strong>Total de gastos:</strong>
+        R$ {{ "%.2f"|format(total_gastos)|replace(".", ",") }}
+    </p>
+
+    <p>
+        <strong>Resultado:</strong>
+        R$ {{ "%.2f"|format(resultado)|replace(".", ",") }}
+    </p>
+
+</div>
+
+<!-- ADICIONAR GASTO -->
+
+<div class="form-card" style="margin-top: 20px;">
+
+    <h2>Adicionar gasto</h2>
+
+    {% if erro %}
+        <p class="mensagem-erro" role="alert">
+            {{ erro }}
+        </p>
+    {% endif %}
+
+    <form method="POST">
+
+        <div class="form-grupo">
+
+            <label for="categoria">Categoria *</label>
+
+            <select id="categoria" name="categoria" required>
+                <option value="">Selecione</option>
+                <option value="Combustível">COMBUSTÍVEL</option>
+                <option value="Alimentação">ALIMENTAÇÃO</option>
+                <option value="Material">MATERIAL</option>
+                <option value="Pedágio">PEDÁGIO</option>
+                <option value="Estacionamento">ESTACIONAMENTO</option>
+                <option value="Outros">OUTROS</option>
+            </select>
+
+        </div>
+
+        <div class="form-grupo">
+
+            <label for="descricao">Descrição</label>
+
+            <input
+                id="descricao"
+                name="descricao"
+                maxlength="200"
+                placeholder="EX.: GASOLINA PARA ATENDIMENTO"
+            >
+
+        </div>
+
+        <div class="form-grupo">
+
+            <label for="valor">Valor (R$) *</label>
+
+            <input
+                id="valor"
+                name="valor"
+                type="number"
+                min="0.01"
+                step="0.01"
+                required
+            >
+
+        </div>
+
+        <div class="acoes-form">
+
+            <button type="submit" class="btn-principal">
+                Salvar gasto
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+<!-- GASTOS REGISTRADOS -->
+
+<div class="form-card" style="margin-top: 20px;">
+
+    <h2>Gastos registrados</h2>
+
+    {% if custos %}
+
+        <div class="tabela-container">
+
+            <table class="tabela-erp">
+
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Categoria</th>
+                        <th>Descrição</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for custo in custos %}
+
+                        <tr>
+
+                            <td>
+                                {{ custo.data_custo.strftime("%d/%m/%Y") }}
+                            </td>
+
+                            <td>
+                                {{ custo.categoria }}
+                            </td>
+
+                            <td>
+                                {{ custo.descricao or "—" }}
+                            </td>
+
+                            <td>
+                                R$ {{ "%.2f"|format(custo.valor)|replace(".", ",") }}
+                            </td>
+
+                            <td>
+
+                                <div
+                                    style="
+                                        display: flex;
+                                        gap: 8px;
+                                        flex-wrap: wrap;
+                                        align-items: center;
+                                    "
+                                >
+
+                                    <a
+                                        href="{{ url_for('editar_gasto', id=custo.id) }}"
+                                        class="btn-detalhes"
+                                    >
+                                        ✏️ Editar
+                                    </a>
+
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('excluir_gasto', id=custo.id) }}"
+                                        onsubmit="return confirm('Deseja realmente excluir este gasto?');"
+                                        style="margin: 0;"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="btn-recusar"
+                                        >
+                                            🗑️ Excluir
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <p>Nenhum gasto registrado para este serviço.</p>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

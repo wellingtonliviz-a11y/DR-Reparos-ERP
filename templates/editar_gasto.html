@@ -1,0 +1,81 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+Editar gasto | DR Reparos ERP
+{% endblock %}
+
+{% block content %}
+
+<a
+    href="{{ url_for('gastos_orcamento', id=servico.orcamento_id) }}"
+    class="btn-voltar"
+>
+    ← Voltar aos gastos
+</a>
+
+<div class="cabecalho-pagina">
+    <h1>Editar gasto #{{ custo.id }}</h1>
+</div>
+
+<div class="form-card">
+
+    <form method="POST">
+
+        <div class="form-grupo">
+            <label for="categoria">Categoria *</label>
+
+            <select id="categoria" name="categoria" required>
+
+                {% for categoria in categorias %}
+
+                    <option
+                        value="{{ categoria }}"
+                        {% if custo.categoria == categoria %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ categoria }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+        </div>
+
+        <div class="form-grupo">
+            <label for="descricao">Descrição</label>
+
+            <input
+                id="descricao"
+                name="descricao"
+                maxlength="200"
+                value="{{ custo.descricao or '' }}"
+            >
+        </div>
+
+        <div class="form-grupo">
+            <label for="valor">Valor (R$) *</label>
+
+            <input
+                id="valor"
+                name="valor"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value="{{ '%.2f'|format(custo.valor) }}"
+                required
+            >
+        </div>
+
+        <div class="acoes-form">
+            <button type="submit" class="btn-principal">
+                Salvar alterações
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

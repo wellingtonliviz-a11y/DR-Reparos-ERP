@@ -148,6 +148,26 @@ class Material(db.Model):
 
     ativo = db.Column(db.Boolean, default=True)
 
+
+@app.route("/clientes/<int:id>/editar", methods=["GET", "POST"])
+def editar_cliente(id):
+    cliente = db.get_or_404(Cliente, id)
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        telefone = request.form.get("telefone", "").strip()
+        if not nome or not telefone:
+            return render_template("editar_cliente.html", cliente=cliente,
+                                   erro="Nome e telefone são obrigatórios."), 400
+        cliente.nome = nome
+        cliente.telefone = telefone
+        cliente.email = request.form.get("email", "").strip() or None
+        cliente.endereco = request.form.get("endereco", "").strip() or None
+        cliente.observacoes = request.form.get("observacoes", "").strip() or None
+        db.session.commit()
+        return redirect(url_for("clientes"))
+    return render_template("editar_cliente.html", cliente=cliente)
+
+
 # =========================================================
 # ORÇAMENTOS
 # =========================================================
@@ -191,9 +211,6 @@ class Orcamento(db.Model):
         default=datetime.utcnow,
         nullable=False
     )
-
-    # Data em que o orçamento passou a contar como faturamento.
-    data_aprovacao = db.Column(db.Date)
 
     cliente = db.relationship(
         "Cliente",
@@ -629,9 +646,15 @@ def inicio():
 
     ultimos_orcamentos = Orcamento.query.order_by(Orcamento.id.desc()).limit(5).all()
 
-    servicos_concluidos = Servico.query.filter_by(
-    status="Concluído"
-).count()
+    # Orçamentos aprovados e faturados no mês
+    servicos_faturados = aprovados_mes
+
+            # Serviços efetivamente concluídos no mês
+    servicos_concluidos = Servico.query.filter(
+                Servico.status == "Concluído",
+                func.extract("month", Servico.data_servico) == hoje.month,
+                func.extract("year", Servico.data_servico) == hoje.year
+            ).count()
    
 
     return render_template(
@@ -651,6 +674,7 @@ def inicio():
         percentual_meta=percentual_meta,
         ultimos_orcamentos=ultimos_orcamentos,
         servicos_concluidos=servicos_concluidos,
+        servicos_faturados=servicos_faturados,
         
     )
         
@@ -924,6 +948,160 @@ def aprovar_orcamento(id):
     orcamento.data_aprovacao = date.today()
     db.session.commit()
     return redirect(url_for("orcamentos"))
+
+
+@app.route("/orcamentos/<int:id>/gastos", methods=["GET", "POST"])
+def gastos_orcamento(id):
+    orcamento = db.get_or_404(Orcamento, id)
+
+    if orcamento.status != "Aprovado":
+        return redirect(url_for("orcamentos"))
+
+    servico = orcamento.servico
+
+    if request.method == "POST":
+        categoria = request.form.get("categoria", "").strip()
+        descricao = request.form.get("descricao", "").strip()
+
+        try:
+            valor = Decimal(
+                request.form.get("valor", "").strip().replace(",", ".")
+            )
+            if not valor.is_finite() or valor <= 0:
+                raise ValueError()
+        except (ValueError, ArithmeticError):
+            return "Informe um valor válido e maior que zero.", 400
+
+        categorias = [
+            "Combustível",
+            "Alimentação",
+            "Material",
+            "Pedágio",
+            "Estacionamento",
+            "Outros"
+        ]
+
+        if categoria not in categorias:
+            return "Categoria inválida.", 400
+
+        # Alguns orçamentos importados ainda não possuem serviço.
+        if servico is None:
+            servico = Servico(
+                cliente_id=orcamento.cliente_id,
+                orcamento_id=orcamento.id,
+                descricao=orcamento.descricao,
+                valor=orcamento.valor,
+                status="Aguardando execução"
+            )
+            db.session.add(servico)
+            db.session.flush()
+
+        novo_custo = Custo(
+            servico_id=servico.id,
+            categoria=categoria,
+            descricao=descricao or categoria,
+            valor=valor,
+            data_custo=date.today()
+        )
+
+        db.session.add(novo_custo)
+        db.session.commit()
+
+        return redirect(url_for("gastos_orcamento", id=id))
+
+    custos = (
+        Custo.query.filter_by(servico_id=servico.id)
+        .order_by(Custo.id.desc())
+        .all()
+        if servico else []
+    )
+
+    total_gastos = sum(
+        (Decimal(custo.valor) for custo in custos),
+        Decimal("0.00")
+    )
+
+    resultado = Decimal(orcamento.valor) - total_gastos
+
+    return render_template(
+        "gastos_orcamento.html",
+        orcamento=orcamento,
+        custos=custos,
+        total_gastos=total_gastos,
+        resultado=resultado
+    )
+
+
+@app.route("/gastos/<int:id>/editar", methods=["GET", "POST"])
+def editar_gasto(id):
+    custo = db.get_or_404(Custo, id)
+    servico = db.get_or_404(Servico, custo.servico_id)
+
+    if servico.orcamento_id is None:
+        return "Este gasto não está vinculado a um orçamento.", 400
+
+    categorias = [
+        "Combustível",
+        "Alimentação",
+        "Material",
+        "Pedágio",
+        "Estacionamento",
+        "Outros"
+    ]
+
+    if request.method == "POST":
+        categoria = request.form.get("categoria", "").strip()
+        descricao = request.form.get("descricao", "").strip()
+        valor_texto = request.form.get("valor", "").strip()
+
+        if categoria not in categorias:
+            return "Categoria inválida.", 400
+
+        try:
+            valor = Decimal(valor_texto.replace(",", "."))
+
+            if not valor.is_finite() or valor <= 0:
+                raise ValueError()
+
+            valor = valor.quantize(Decimal("0.01"))
+
+        except (ValueError, ArithmeticError):
+            return "Informe um valor válido e maior que zero.", 400
+
+        custo.categoria = categoria
+        custo.descricao = descricao or categoria
+        custo.valor = valor
+
+        db.session.commit()
+
+        return redirect(
+            url_for("gastos_orcamento", id=servico.orcamento_id)
+        )
+
+    return render_template(
+        "editar_gasto.html",
+        custo=custo,
+        servico=servico,
+        categorias=categorias
+    )
+
+
+@app.route("/gastos/<int:id>/excluir", methods=["POST"])
+def excluir_gasto(id):
+    custo = db.get_or_404(Custo, id)
+    servico = db.get_or_404(Servico, custo.servico_id)
+
+    if servico.orcamento_id is None:
+        return "Este gasto não está vinculado a um orçamento.", 400
+
+    orcamento_id = servico.orcamento_id
+
+    db.session.delete(custo)
+    db.session.commit()
+
+    return redirect(
+        url_for("gastos_orcamento", id=orcamento_id)
+    )
 
 
 @app.route("/orcamentos/<int:id>/recusar", methods=["POST"])
@@ -1509,13 +1687,16 @@ def gerar_orcamento_pdf(id):
 @app.route("/servicos")
 def servicos():
 
-    lista = Servico.query.order_by(
-        Servico.id.desc()
-    ).all()
+    filtro = request.args.get("status", "").strip()
+    consulta = Servico.query
+    if filtro == "Concluído":
+        consulta = consulta.filter(Servico.status == "Concluído")
+    lista = consulta.order_by(Servico.id.desc()).all()
 
     return render_template(
         "servicos.html",
-        servicos=lista
+        servicos=lista,
+        filtro_status=filtro
     )
 
 @app.route("/servicos/<int:id>")
@@ -1863,6 +2044,7 @@ def financeiro():
         func.coalesce(Orcamento.data_aprovacao, Orcamento.data_orcamento).desc(),
         Orcamento.id.desc()
     ).all()
+    custos = Custo.query.order_by(Custo.data_custo.desc(), Custo.id.desc()).all()
     despesas = Despesa.query.order_by(Despesa.data_despesa.desc(), Despesa.id.desc()).all()
     total_entradas = db.session.query(func.coalesce(func.sum(Orcamento.valor), 0)).filter(
         Orcamento.status == "Aprovado"
@@ -1874,8 +2056,11 @@ def financeiro():
     return render_template(
         "financeiro.html",
         orcamentos_aprovados=orcamentos_aprovados,
+        custos=custos,
         despesas=despesas,
         total_entradas=total_entradas,
+        total_custos=Decimal(total_custos or 0),
+        total_despesas=Decimal(total_despesas or 0),
         total_saidas=total_saidas,
         saldo=saldo
     )
@@ -1955,6 +2140,90 @@ def catalogo_servicos():
         "catalogo_servicos.html",
         servicos=servicos_catalogo
     )
+
+@app.route("/catalogo-servicos/novo", methods=["GET", "POST"])
+def novo_catalogo_servico():
+
+    def proximo_codigo():
+        codigos = db.session.query(CatalogoServico.codigo).all()
+
+        numeros = [
+            int(codigo)
+            for (codigo,) in codigos
+            if codigo and codigo.isdigit()
+        ]
+
+        return str(max(numeros, default=0) + 1)
+
+    if request.method == "POST":
+
+        descricao = request.form.get("descricao", "").strip()
+
+        if not descricao:
+            return render_template(
+                "novo_catalogo_servico.html",
+                codigo_automatico=proximo_codigo(),
+                erro="O nome do serviço é obrigatório."
+            ), 400
+
+        try:
+            valor = Decimal(
+                request.form.get("valor_base", "0").replace(",", ".")
+            )
+
+            custo = Decimal(
+                (request.form.get("custo_base", "0") or "0").replace(",", ".")
+            )
+
+            if not valor.is_finite() or not custo.is_finite():
+                raise ValueError("Valor não finito")
+
+        except (ValueError, ArithmeticError):
+            return render_template(
+                "novo_catalogo_servico.html",
+                codigo_automatico=proximo_codigo(),
+                erro="Informe valores numéricos válidos."
+            ), 400
+
+        if valor < 0 or custo < 0:
+            return render_template(
+                "novo_catalogo_servico.html",
+                codigo_automatico=proximo_codigo(),
+                erro="Os valores não podem ser negativos."
+            ), 400
+
+        codigo = proximo_codigo()
+
+        servico = CatalogoServico(
+            codigo=codigo,
+            descricao=descricao,
+            complemento=request.form.get("complemento", "").strip() or None,
+            categoria=request.form.get("categoria", "").strip() or None,
+            custo_base=custo,
+            valor_base=valor,
+            ativo=True
+        )
+
+        db.session.add(servico)
+
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Erro ao cadastrar serviço")
+            return render_template(
+                "novo_catalogo_servico.html",
+                codigo_automatico=proximo_codigo(),
+                erro="Não foi possível cadastrar o serviço. Tente novamente."
+            ), 500
+
+        return redirect(url_for("catalogo_servicos"))
+
+    return render_template(
+        "novo_catalogo_servico.html",
+        codigo_automatico=proximo_codigo()
+    )
+
 
 @app.route("/catalogo-servicos/<int:id>/editar", methods=["GET", "POST"])
 def editar_catalogo_servico(id):
@@ -2183,6 +2452,9 @@ def editar_material(id):
         "editar_material.html",
         material=material
     )
+
+
+
 
 @app.route(
     "/configuracoes",

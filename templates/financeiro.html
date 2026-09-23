@@ -1,133 +1,25 @@
 {% extends "base.html" %}
-
-{% block title %}
-Financeiro | DR Reparos ERP
-{% endblock %}
-
+{% block title %}Financeiro | DR Reparos ERP{% endblock %}
 {% block content %}
-
-<div style="margin-bottom: 15px;">
-    <a href="{{ url_for('inicio') }}" class="btn-voltar">
-        ← Voltar
-    </a>
-</div>
-
-<header class="topo">
-
-    <div>
-        <h1>Financeiro</h1>
-        <p>Entradas e saídas da DR Reparos</p>
-    </div>
-
-    <a
-        class="botao"
-        href="{{ url_for('nova_despesa') }}"
-    >
-        + Nova despesa
-    </a>
-
-</header>
-
-
+<a class="btn-voltar" href="{{ url_for('inicio') }}">← Voltar</a>
+<header class="topo"><div><h1>Financeiro</h1><p>Orçamentos aprovados, custos dos serviços e despesas gerais.</p></div><a class="botao" href="{{ url_for('nova_despesa') }}">+ Nova despesa</a></header>
 <section class="cards">
-
-    <div class="card">
-        <span>Entradas</span>
-
-        <strong>
-            R$ {{ "%.2f"|format(total_entradas)|replace(".", ",") }}
-        </strong>
-    </div>
-
-
-    <div class="card">
-        <span>Saídas</span>
-
-        <strong>
-            R$ {{ "%.2f"|format(total_saidas)|replace(".", ",") }}
-        </strong>
-    </div>
-
-
-    <div class="card destaque">
-        <span>Saldo</span>
-
-        <strong>
-            R$ {{ "%.2f"|format(saldo)|replace(".", ",") }}
-        </strong>
-    </div>
-
+<div class="card"><span>Entradas aprovadas</span><strong>R$ {{ '%.2f'|format(total_entradas)|replace('.', ',') }}</strong></div>
+<div class="card"><span>Saídas</span><strong>R$ {{ '%.2f'|format(total_saidas)|replace('.', ',') }}</strong></div>
+<div class="card destaque"><span>Saldo</span><strong>R$ {{ '%.2f'|format(saldo)|replace('.', ',') }}</strong></div>
 </section>
-
-
-<section class="painel">
-
-    <div class="titulo-painel">
-        <div>
-            <h2>Receitas de Serviços</h2>
-            <p>Pagamentos registrados</p>
-        </div>
-    </div>
-
-
-    <div class="tabela-container">
-
-        <table class="tabela-erp">
-
-            <thead>
-            <tr>
-                <th>Data</th>
-                <th>Cliente</th>
-                <th>Serviço</th>
-                <th>Pagamento</th>
-                <th>Valor</th>
-            </tr>
-            </thead>
-
-            <tbody>
-
-            {% for pagamento in pagamentos %}
-
-            <tr>
-
-                <td>
-                    {{ pagamento.data_pagamento.strftime("%d/%m/%Y") }}
-                </td>
-
-                <td>
-                    {{ pagamento.servico.cliente.nome }}
-                </td>
-
-                <td>
-                    {{ pagamento.servico.descricao }}
-                </td>
-
-                <td>
-                    {{ pagamento.forma_pagamento }}
-                </td>
-
-                <td>
-                    R$ {{ "%.2f"|format(pagamento.valor)|replace(".", ",") }}
-                </td>
-
-            </tr>
-
-            {% else %}
-
-            <tr>
-                <td colspan="5">
-                    Nenhuma receita registrada.
-                </td>
-            </tr>
-
-            {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-</section>
-
+<section class="painel"><h2>Orçamentos aprovados</h2><p>Valores aprovados; não representam necessariamente pagamentos recebidos.</p>
+<div class="tabela-container"><table class="tabela-erp"><thead><tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>
+{% for orcamento in orcamentos_aprovados %}<tr><td>#{{ orcamento.id }}</td><td>{{ (orcamento.data_aprovacao or orcamento.data_orcamento).strftime('%d/%m/%Y') }}</td><td>{{ orcamento.cliente.nome }}</td><td>{{ orcamento.descricao }}</td><td>R$ {{ '%.2f'|format(orcamento.valor)|replace('.', ',') }}</td></tr>
+{% else %}<tr><td colspan="5">Nenhum orçamento aprovado.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section class="painel" id="custos-despesas"><h2>Custos + despesas</h2><p>Custos de serviços: R$ {{ '%.2f'|format(total_custos)|replace('.', ',') }} | Despesas gerais: R$ {{ '%.2f'|format(total_despesas)|replace('.', ',') }}</p>
+<h3>Custos dos serviços</h3><div class="tabela-container"><table class="tabela-erp"><thead><tr><th>Data</th><th>Serviço</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>
+{% for custo in custos %}<tr><td>{{ custo.data_custo.strftime('%d/%m/%Y') }}</td><td>#{{ custo.servico.numero_os or custo.servico.id }} — {{ custo.servico.cliente.nome }}</td><td>{{ custo.categoria }}</td><td>{{ custo.descricao or '—' }}</td><td>R$ {{ '%.2f'|format(custo.valor)|replace('.', ',') }}</td></tr>
+{% else %}<tr><td colspan="5">Nenhum custo registrado.</td></tr>{% endfor %}
+</tbody></table></div>
+<h3>Despesas gerais</h3><div class="tabela-container"><table class="tabela-erp"><thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>
+{% for despesa in despesas %}<tr><td>{{ despesa.data_despesa.strftime('%d/%m/%Y') }}</td><td>{{ despesa.categoria }}</td><td>{{ despesa.descricao }}</td><td>R$ {{ '%.2f'|format(despesa.valor)|replace('.', ',') }}</td></tr>
+{% else %}<tr><td colspan="4">Nenhuma despesa registrada.</td></tr>{% endfor %}
+</tbody></table></div></section>
 {% endblock %}
